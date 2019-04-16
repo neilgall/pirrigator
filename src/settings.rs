@@ -4,36 +4,48 @@ extern crate serde;
 use config::{ConfigError, Config, File, Environment};
 
 #[derive(Debug, Deserialize)]
-struct WeatherSensor {
-	device: String,
-	address: u16
+pub struct Database {
+	pub path: String
 }
 
 #[derive(Debug, Deserialize)]
-struct ADC {
-	device: String,
-	device_type: String,
-	enable_gpio: u8
+pub struct WeatherSensor {
+	pub device: String,
+	pub address: u16
 }
 
 #[derive(Debug, Deserialize)]
-struct MoistureSensor {
-	name: String,
-	channel: u8
+pub struct ADC {
+	pub device: String,
+	pub device_type: String,
+	pub enable_gpio: u8
 }
 
 #[derive(Debug, Deserialize)]
-struct WaterValve {
-	name: String,
-	gpio: u8
+pub struct MoistureSensor {
+	pub name: String,
+	pub channel: u8
+}
+
+#[derive(Debug, Deserialize)]
+pub struct WaterValve {
+	pub name: String,
+	pub gpio: u8
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Button {
+	pub gpio: u8
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Settings {
-	weather: WeatherSensor,
-	adc: ADC,
-	moisture: Vec<MoistureSensor>,
-	valves: Vec<WaterValve>
+	pub database: Database,
+	pub weather: WeatherSensor,
+	pub adc: ADC,
+	pub button: Button,
+	pub moisture: Vec<MoistureSensor>,
+	pub valves: Vec<WaterValve>
 }
 
 impl Settings {

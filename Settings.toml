@@ -1,3 +1,6 @@
+[database]
+path = "db.sqlite"
+
 [weather]
 device = "/dev/i2c-1"
 address = 0x76
@@ -6,6 +9,9 @@ address = 0x76
 device = "CE0"
 device_type = "MCP3008"
 enable_gpio = 22
+
+[button]
+gpio = 23
 
 [[moisture]]
 name = "One"

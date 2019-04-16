@@ -1,24 +1,20 @@
 #[macro_use]
 extern crate serde_derive;
 
-// extern crate bme280;
+use std::path::Path;
 
-// use bme280::{Bme280Device, DEFAULT_DEVICE, DEFAULT_ADDRESS};
-
+mod database;
 mod settings;
+mod weather;
 
 fn main() {
-	let s = settings::Settings::new().expect("Unable to load settings");
+	let s = settings::Settings::new()
+		.expect("Unable to load settings");
 
 	println!("settings: {:?}", s);
 
-	// let mut dev = Bme280Device::new(DEFAULT_DEVICE, DEFAULT_ADDRESS)
-	// 	.expect("unable to open device");
+	let _ = database::Database::new(Path::new(&s.database.path))
+		.expect("Unable to open database");
 
-	// let r = dev.read()
-	// 	.expect("unable to read data from device");
-		
-	// println!("temperature: {}", r.temperature);
-	// println!("humidity: {}", r.humidity);
-	// println!("pressure: {}", r.pressure);
+	weather::read(&s.weather.device, s.weather.address);
 }
