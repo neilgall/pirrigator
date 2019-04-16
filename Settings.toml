@@ -1,0 +1,33 @@
+[weather]
+device = "/dev/i2c-1"
+address = 0x76
+
+[adc]
+device = "CE0"
+device_type = "MCP3008"
+enable_gpio = 22
+
+[[moisture]]
+name = "One"
+channel = 0
+
+[[moisture]]
+name = "Two"
+channel = 1
+
+[[moisture]]
+name = "Three"
+channel = 2
+
+[[valves]]
+name = "One"
+gpio = 17
+
+[[valves]]
+name = "Two"
+gpio = 27
+
+[[valves]]
+name = "Three"
+gpio = 25
+
