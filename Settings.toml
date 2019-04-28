@@ -40,4 +40,9 @@ name = "Left"
 gpio = 17
 
 [[buttons]]
+gpio = 24
+name = "Top"
+
+[[buttons]]
 gpio = 23
+name = "Two"

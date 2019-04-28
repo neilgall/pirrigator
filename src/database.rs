@@ -43,9 +43,9 @@ impl Database {
 	pub fn store_event(&self, event: &Event) -> Result<(), Error> {
 		match event {
 			Event::WeatherEvent(w) => self.store_weather(w),
-			Event::MoistureEvent(m) => self.store_moisture(m)
+			Event::MoistureEvent(m) => self.store_moisture(m),
+			_ => Ok(())
 		}?;
-		println!("stored event {:?}", event);
 		Ok(())
 	}
 

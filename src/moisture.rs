@@ -63,7 +63,10 @@ fn send_event(sensor: &Sensor, value: u16, channel: &Sender<Event>) {
 		name: sensor.name.clone(),
 		value
 	};
-	channel.send(Event::MoistureEvent(event));
+	match channel.send(Event::MoistureEvent(event)) {
+		Ok(_) => {}
+		Err(e) => println!("channel send error {}", e)
+	}
 }
 
 impl MoistureSensor {

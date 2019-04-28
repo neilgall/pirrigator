@@ -5,6 +5,7 @@ use std::error::Error;
 use std::path::Path;
 use std::sync::mpsc;
 
+mod button;
 mod database;
 mod event;
 mod moisture;
@@ -15,7 +16,8 @@ pub struct Pirrigator {
 	database: database::Database,
 	event_receiver: mpsc::Receiver<event::Event>,
 	weather: Option<weather::WeatherSensor>,
-	moisture: Option<moisture::MoistureSensor>
+	moisture: Option<moisture::MoistureSensor>,
+	buttons: button::Buttons
 }
 
 // Turns an Option<T> into a Result<Option<U>>
@@ -39,11 +41,14 @@ impl Pirrigator {
 			moisture::MoistureSensor::new(&adc, &s.moisture, mpsc::Sender::clone(&tx))
 		)?;
 
+		let buttons = button::Buttons::new(&s.buttons, mpsc::Sender::clone(&tx))?;
+
 		Ok(Pirrigator{
 			database: db,
 			event_receiver: rx,
 			weather,
-			moisture
+			moisture,
+			buttons
 		})
 	}
 
@@ -51,6 +56,8 @@ impl Pirrigator {
 		loop {
 			let event = self.event_receiver.recv()
 				.expect("receive error");
+
+			println!("event {:?}", event);
 
 			self.database.store_event(&event)
 				.expect("database store error");
