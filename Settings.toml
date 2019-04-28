@@ -4,6 +4,7 @@ path = "db.sqlite"
 [weather]
 device = "/dev/i2c-1"
 address = 0x76
+update = 300
 
 [adc]
 device = "CE0"
@@ -37,3 +38,5 @@ gpio = 27
 name = "Three"
 gpio = 25
 
+[[buttons]]
+gpio = 23
