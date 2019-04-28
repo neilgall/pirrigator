@@ -4,23 +4,11 @@ extern crate serde;
 use config::{Config, ConfigError, Environment, File};
 
 use crate::weather::WeatherSensorSettings;
+use crate::moisture::{ADCSettings, MoistureSensorSettings};
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct Database {
 	pub path: String
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq)]
-pub struct ADC {
-	pub device: String,
-	pub device_type: String,
-	pub enable_gpio: u8
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq)]
-pub struct MoistureSensor {
-	pub name: String,
-	pub channel: u8
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
@@ -38,9 +26,9 @@ pub struct Button {
 pub struct Settings {
 	pub database: Database,
 	pub weather: Option<WeatherSensorSettings>,
-	pub adc: Option<ADC>,
+	pub adc: Option<ADCSettings>,
+	pub moisture: Vec<MoistureSensorSettings>,
 	pub buttons: Vec<Button>,
-	pub moisture: Vec<MoistureSensor>,
 	pub valves: Vec<WaterValve>
 }
 

@@ -45,7 +45,7 @@ fn send_event(data: Bme280Data, channel: &Sender<Event>) {
 
 	 match channel.send(Event::WeatherEvent(event)) {
 		Ok(_) => {},
-		Err(e) => println!("ERROR! WeatherSensor: {}", e)
+		Err(e) => error(e)
 	};
 }
 

@@ -10,33 +10,34 @@ update = 300
 device = "CE0"
 device_type = "MCP3008"
 enable_gpio = 22
+update = 10
 
 [button]
 gpio = 23
 
 [[moisture]]
-name = "One"
+name = "Left"
 channel = 0
 
 [[moisture]]
-name = "Two"
+name = "Centre"
 channel = 1
 
 [[moisture]]
-name = "Three"
+name = "Right"
 channel = 2
 
 [[valves]]
-name = "One"
-gpio = 17
+name = "Right"
+gpio = 25
 
 [[valves]]
-name = "Two"
+name = "Centre"
 gpio = 27
 
 [[valves]]
-name = "Three"
-gpio = 25
+name = "Left"
+gpio = 17
 
 [[buttons]]
 gpio = 23

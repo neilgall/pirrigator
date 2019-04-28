@@ -7,15 +7,23 @@ use std::sync::mpsc;
 
 mod database;
 mod event;
+mod moisture;
 mod weather;
 pub mod settings;
-
-use event::Event;
 
 pub struct Pirrigator {
 	database: database::Database,
 	event_receiver: mpsc::Receiver<event::Event>,
-	weather: Option<weather::WeatherSensor>
+	weather: Option<weather::WeatherSensor>,
+	moisture: Option<moisture::MoistureSensor>
+}
+
+// Turns an Option<T> into a Result<Option<U>>
+fn traverse<T, U, E>(t: &Option<T>, f: &Fn(&T) -> Result<U, E>) -> Result<Option<U>, E> {
+	match t {
+		None => Ok(None),
+		Some(t) => f(t).map(Some)
+	}
 }
 
 impl Pirrigator {
@@ -23,24 +31,29 @@ impl Pirrigator {
 		let db = database::Database::new(Path::new(&s.database.path))?;
 		let (tx, rx) = mpsc::channel();
 
-		let w = s.weather.map(|w|
+		let weather = traverse(&s.weather, &|w|
 			weather::WeatherSensor::new(&w, mpsc::Sender::clone(&tx))
-				.expect("Failed to initialise weather sensor")
-		);
+		)?;
+
+		let moisture = traverse(&s.adc, &|adc|
+			moisture::MoistureSensor::new(&adc, &s.moisture, mpsc::Sender::clone(&tx))
+		)?;
 
 		Ok(Pirrigator{
 			database: db,
 			event_receiver: rx,
-			weather: w
+			weather,
+			moisture
 		})
 	}
 
 	pub fn run(&self) {
 		loop {
-			let result = match self.event_receiver.recv().expect("receive error") {
-				Event::WeatherEvent(w) => self.database.store_weather(&w)
-			};
-			result.expect("receiver error");
+			let event = self.event_receiver.recv()
+				.expect("receive error");
+
+			self.database.store_event(&event)
+				.expect("database store error");
 		}
 	}
 }
