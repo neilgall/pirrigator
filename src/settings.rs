@@ -6,16 +6,11 @@ use config::{Config, ConfigError, Environment, File};
 use crate::button::{ButtonSettings};
 use crate::weather::WeatherSensorSettings;
 use crate::moisture::{ADCSettings, MoistureSensorSettings};
+use crate::valve::ValveSettings;
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct Database {
 	pub path: String
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq)]
-pub struct WaterValve {
-	pub name: String,
-	pub gpio: u8
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
@@ -25,7 +20,7 @@ pub struct Settings {
 	pub adc: Option<ADCSettings>,
 	pub moisture: Vec<MoistureSensorSettings>,
 	pub buttons: Vec<ButtonSettings>,
-	pub valves: Vec<WaterValve>
+	pub valves: Vec<ValveSettings>
 }
 
 impl Settings {

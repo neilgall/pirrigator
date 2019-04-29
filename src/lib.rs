@@ -9,6 +9,7 @@ mod button;
 mod database;
 mod event;
 mod moisture;
+mod valve;
 mod weather;
 pub mod settings;
 
@@ -17,7 +18,8 @@ pub struct Pirrigator {
 	event_receiver: mpsc::Receiver<event::Event>,
 	weather: Option<weather::WeatherSensor>,
 	moisture: Option<moisture::MoistureSensor>,
-	buttons: button::Buttons
+	buttons: button::Buttons,
+	valves: valve::Valves
 }
 
 // Turns an Option<T> into a Result<Option<U>>
@@ -42,17 +44,19 @@ impl Pirrigator {
 		)?;
 
 		let buttons = button::Buttons::new(&s.buttons, mpsc::Sender::clone(&tx))?;
+		let valves = valve::Valves::new(&s.valves)?;
 
 		Ok(Pirrigator{
 			database: db,
 			event_receiver: rx,
 			weather,
 			moisture,
-			buttons
+			buttons,
+			valves
 		})
 	}
 
-	pub fn run(&self) {
+	pub fn run(&mut self) {
 		loop {
 			let event = self.event_receiver.recv()
 				.expect("receive error");
@@ -61,6 +65,18 @@ impl Pirrigator {
 
 			self.database.store_event(&event)
 				.expect("database store error");
+
+			match event {
+				event::Event::ButtonEvent(b) => self.button_event(&b),
+				_ => {}
+			}
+		}
+	}
+
+	fn button_event(&mut self, b: &button::ButtonEvent) {
+		match b.transition {
+			button::Transition::Released => self.valves.toggle().unwrap(),
+			_ => {}
 		}
 	}
 }
