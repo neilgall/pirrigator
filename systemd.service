@@ -1,0 +1,13 @@
+[Unit]
+Description=Automated Irrigation Service
+
+[Service]
+Type=Simple
+WorkingDirectory=/var/lib/pirrigator
+ExecStart=/usr/local/bin/pirrigator
+StandardOutput=syslog
+StandardError=syslog
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
