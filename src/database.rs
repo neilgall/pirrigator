@@ -1,6 +1,6 @@
 extern crate rusqlite;
 
-use rusqlite::{Connection, Error, NO_PARAMS};
+use rusqlite::{Connection, Error, NO_PARAMS, OpenFlags};
 use rusqlite::types::ToSql;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -18,7 +18,7 @@ fn to_seconds(t: &SystemTime) -> u32 {
 
 impl Database {
 	pub fn new(path: &Path) -> Result<Self, Error> {
-		let conn = Connection::open(&path)?;
+		let conn = Connection::open_with_flags(&path, OpenFlags::SQLITE_OPEN_NO_MUTEX)?;
 
 		conn.execute(
 			"CREATE TABLE IF NOT EXISTS weather (

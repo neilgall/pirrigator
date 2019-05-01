@@ -9,7 +9,8 @@ fn main() {
 
 	println!("settings: {:?}", s);
 
-	let mut p = Pirrigator::new(s)
-	.expect("Failed to start Pirrigator");
-	p.run();
+	let p = Pirrigator::new(s)
+		.expect("Failed to start Pirrigator");
+
+	p.run_server();
 }

@@ -1,8 +1,14 @@
 #[macro_use]
 extern crate serde_derive;
 
+extern crate iron;
+
+use iron::prelude::*;
+use iron::status;
+
 use std::error::Error;
 use std::path::Path;
+use std::thread::{JoinHandle, spawn};
 use std::sync::mpsc;
 
 mod button;
@@ -13,13 +19,16 @@ mod valve;
 mod weather;
 pub mod settings;
 
-pub struct Pirrigator {
+struct Controller {
 	database: database::Database,
-	event_receiver: mpsc::Receiver<event::Event>,
 	weather: Option<weather::WeatherSensor>,
 	moisture: Option<moisture::MoistureSensor>,
 	buttons: button::Buttons,
 	valves: valve::Valves
+}
+
+pub struct Pirrigator {
+	thread: JoinHandle<()>
 }
 
 // Turns an Option<T> into a Result<Option<U>>
@@ -32,7 +41,6 @@ fn traverse<T, U, E>(t: &Option<T>, f: &Fn(&T) -> Result<U, E>) -> Result<Option
 
 impl Pirrigator {
 	pub fn new(s: settings::Settings) -> Result<Pirrigator, Box<Error>> {
-		let db = database::Database::new(Path::new(&s.database.path))?;
 		let (tx, rx) = mpsc::channel();
 
 		let weather = traverse(&s.weather, &|w|
@@ -46,19 +54,32 @@ impl Pirrigator {
 		let buttons = button::Buttons::new(&s.buttons, mpsc::Sender::clone(&tx))?;
 		let valves = valve::Valves::new(&s.valves)?;
 
-		Ok(Pirrigator{
+		let db = database::Database::new(Path::new(&s.database.path))?;
+
+		let mut controller = Controller {
 			database: db,
-			event_receiver: rx,
 			weather,
 			moisture,
 			buttons,
 			valves
-		})
+		};
+
+		let thread = spawn(move || controller.run(rx));
+
+		return Ok(Pirrigator { thread })
 	}
 
-	pub fn run(&mut self) {
+	pub fn run_server(&self) {
+		Iron::new(|_: &mut Request| {
+        	Ok(Response::with((status::Ok, "Hello World!")))
+	    }).http("0.0.0.0:5000").unwrap();
+	}
+}
+
+impl Controller {
+	pub fn run(&mut self, rx: mpsc::Receiver<event::Event>) {
 		loop {
-			let event = self.event_receiver.recv()
+			let event = rx.recv()
 				.expect("receive error");
 
 			println!("event {:?}", event);
