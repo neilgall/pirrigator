@@ -1,41 +1,6 @@
-[database]
-path = "db.sqlite"
+moisture = []
+buttons = []
+valves = []
 
-[weather]
-device = "/dev/i2c-1"
-address = 0x76
-update = 300
+database.path = "db.sqlite"
 
-[adc]
-device = "CE0"
-device_type = "MCP3008"
-enable_gpio = 22
-update = 300
-
-[[moisture]]
-name = "Left"
-channel = 0
-
-[[moisture]]
-name = "Centre"
-channel = 1
-
-[[moisture]]
-name = "Right"
-channel = 2
-
-[[valves]]
-name = "Right"
-gpio = 25
-
-[[valves]]
-name = "Centre"
-gpio = 27
-
-[[valves]]
-name = "Left"
-gpio = 17
-
-[[buttons]]
-gpio = 23
-name = "Top"

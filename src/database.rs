@@ -1,15 +1,18 @@
+extern crate r2d2;
+extern crate r2d2_sqlite;
 extern crate rusqlite;
 
+use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Connection, Error, NO_PARAMS, OpenFlags};
 use rusqlite::types::ToSql;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::event::Event;
 use crate::weather;
 use crate::moisture;
 
 pub struct Database {
-	conn: Connection
+	pool: r2d2::Pool<SqliteConnectionManager>
 }
 
 fn to_seconds(t: &SystemTime) -> u32 {
@@ -18,7 +21,9 @@ fn to_seconds(t: &SystemTime) -> u32 {
 
 impl Database {
 	pub fn new(path: &Path) -> Result<Self, Error> {
-		let conn = Connection::open(&path)?;
+		let manager = SqliteConnectionManager::file(&path);
+		let pool = r2d2::Pool::new(manager).unwrap();
+		let conn = pool.clone().get().unwrap();
 
 		conn.execute(
 			"CREATE TABLE IF NOT EXISTS weather (
@@ -38,7 +43,15 @@ impl Database {
 			NO_PARAMS)?;
 
 		println!("Opened database at {}", path.to_str().unwrap());
-		Ok(Database { conn })
+		Ok(Database { 
+			pool
+		})
+	}
+
+	pub fn clone(&self) -> Database {
+		Database {
+			pool: self.pool.clone()
+		}
 	}
 
 	pub fn store_event(&self, event: &Event) -> Result<(), Error> {
@@ -50,8 +63,12 @@ impl Database {
 		Ok(())
 	}
 
+	fn conn(&self) -> r2d2::PooledConnection<SqliteConnectionManager> {
+		self.pool.clone().get().unwrap()
+	}
+
 	fn store_weather(&self, event: &weather::WeatherEvent) -> Result<(), Error> {
-		self.conn.execute(
+		self.conn().execute(
 			"INSERT INTO weather (time, temperature, humidity, pressure) VALUES (?1, ?2, ?3, ?4)",
 			&[&to_seconds(&event.timestamp) as &ToSql, &event.temperature, &event.humidity, &event.pressure]
 		)?;
@@ -59,7 +76,7 @@ impl Database {
 	}
 
 	fn store_moisture(&self, event: &moisture::MoistureEvent) -> Result<(), Error> {
-		self.conn.execute(
+		self.conn().execute(
 			"INSERT INTO moisture (time, sensor, value) VALUES (?1, ?2, ?3)",
 			&[&to_seconds(&event.timestamp) as &ToSql, &event.name, &event.value]
 		)?;

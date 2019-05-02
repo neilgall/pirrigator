@@ -1,11 +1,6 @@
 #[macro_use]
 extern crate serde_derive;
 
-extern crate iron;
-
-use iron::prelude::*;
-use iron::status;
-
 use std::error::Error;
 use std::path::Path;
 use std::thread::{JoinHandle, spawn};
@@ -15,6 +10,7 @@ mod button;
 mod database;
 mod event;
 mod moisture;
+mod server;
 mod valve;
 mod weather;
 pub mod settings;
@@ -28,7 +24,8 @@ struct Controller {
 }
 
 pub struct Pirrigator {
-	thread: JoinHandle<()>
+	thread: JoinHandle<()>,
+	database: database::Database
 }
 
 // Turns an Option<T> into a Result<Option<U>>
@@ -57,7 +54,7 @@ impl Pirrigator {
 		let db = database::Database::new(Path::new(&s.database.path))?;
 
 		let mut controller = Controller {
-			database: db,
+			database: db.clone(),
 			weather,
 			moisture,
 			buttons,
@@ -66,13 +63,14 @@ impl Pirrigator {
 
 		let thread = spawn(move || controller.run(rx));
 
-		return Ok(Pirrigator { thread })
+		return Ok(Pirrigator { 
+			thread,
+			database: db
+		})
 	}
 
 	pub fn run_server(&self) {
-		Iron::new(|_: &mut Request| {
-        	Ok(Response::with((status::Ok, "Hello World!")))
-	    }).http("0.0.0.0:5000").unwrap();
+		server::run(self.database.clone());
 	}
 }
 
