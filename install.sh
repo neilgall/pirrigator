@@ -8,12 +8,14 @@
 set -e
 
 HOST=${1:-pirrigator-root}
+#CP="rsync --progress"
+CP="scp"
 
 cargo build --target=arm-unknown-linux-gnueabihf --release
 
 ssh ${HOST} systemctl stop pirrigator
-rsync --progress target/arm-unknown-linux-gnueabihf/release/pirrigator ${HOST}:/usr/local/bin/pirrigator
-rsync --progress Settings.toml ${HOST}:/var/lib/pirrigator/Settings.toml
-rsync --progress systemd.service ${HOST}:/etc/systemd/system/pirrigator.service
+${CP} Settings.toml ${HOST}:/var/lib/pirrigator/Settings.toml
+${CP} systemd.service ${HOST}:/etc/systemd/system/pirrigator.service
+${CP} target/arm-unknown-linux-gnueabihf/release/pirrigator ${HOST}:/usr/local/bin/pirrigator
 ssh ${HOST} systemctl daemon-reload
 ssh ${HOST} systemctl start pirrigator

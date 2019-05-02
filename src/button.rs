@@ -70,6 +70,8 @@ fn read_all<'a>(buttons: &'a Vec<Button>) -> Vec<(&'a Button, bool)> {
 }
 
 fn main(buttons: Vec<Button>, channel: Sender<Event>) {
+	println!("Started polling {} button(s)", buttons.len());
+
 	let mut prev_values = read_all(&buttons);
 	loop {
 		let curr_values = read_all(&buttons);

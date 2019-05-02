@@ -30,9 +30,11 @@ pub struct Valves {
 
 impl Valves {
 	pub fn new(settings: &Vec<ValveSettings>) -> Result<Self, Box<Error>> {
-		let units = settings.iter()
+		let units: Vec<Valve> = settings.iter()
 			.map(|v| Valve::new(v).unwrap())
 			.collect();
+
+		println!("Initialised {} valve(s)", units.len());
 
 		Ok(Valves { 
 			units,

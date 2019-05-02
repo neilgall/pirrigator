@@ -44,14 +44,14 @@ impl Pirrigator {
 		let (tx, rx) = mpsc::channel();
 
 		let weather = traverse(&s.weather, &|w|
-			weather::WeatherSensor::new(&w, mpsc::Sender::clone(&tx))
+			weather::WeatherSensor::new(&w, tx.clone())
 		)?;
 
 		let moisture = traverse(&s.adc, &|adc|
-			moisture::MoistureSensor::new(&adc, &s.moisture, mpsc::Sender::clone(&tx))
+			moisture::MoistureSensor::new(&adc, &s.moisture, tx.clone())
 		)?;
 
-		let buttons = button::Buttons::new(&s.buttons, mpsc::Sender::clone(&tx))?;
+		let buttons = button::Buttons::new(&s.buttons, tx.clone())?;
 		let valves = valve::Valves::new(&s.valves)?;
 
 		let db = database::Database::new(Path::new(&s.database.path))?;

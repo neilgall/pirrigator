@@ -26,6 +26,7 @@ pub struct WeatherEvent {
 }
 
 fn main(mut device: Bme280Device, channel: Sender<Event>, period: Duration) {
+	println!("Started weather sensor");
 	loop {
 		match device.read() {
 			Ok(data) => send_event(data, &channel),

@@ -46,6 +46,7 @@ impl Sensor {
 }
 
 fn main(mcp: &mut MCPDevice, sensors: Vec<Sensor>, channel: Sender<Event>, period: Duration) {
+	println!("Started {} moisture sensor(s)", sensors.len());
 	loop {
 		for sensor in &sensors {
 			match mcp.read_value(&sensor.channel) {

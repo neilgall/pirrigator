@@ -18,7 +18,7 @@ fn to_seconds(t: &SystemTime) -> u32 {
 
 impl Database {
 	pub fn new(path: &Path) -> Result<Self, Error> {
-		let conn = Connection::open_with_flags(&path, OpenFlags::SQLITE_OPEN_NO_MUTEX)?;
+		let conn = Connection::open(&path)?;
 
 		conn.execute(
 			"CREATE TABLE IF NOT EXISTS weather (
@@ -37,6 +37,7 @@ impl Database {
 			)",
 			NO_PARAMS)?;
 
+		println!("Opened database at {}", path.to_str().unwrap());
 		Ok(Database { conn })
 	}
 
