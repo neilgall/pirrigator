@@ -17,7 +17,7 @@ pub struct WeatherSensor {
 	thread: JoinHandle<()>
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct WeatherEvent {
 	pub timestamp: SystemTime,
 	pub temperature: f64,

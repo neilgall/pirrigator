@@ -3,10 +3,10 @@ extern crate r2d2_sqlite;
 extern crate rusqlite;
 
 use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::{Connection, Error, NO_PARAMS, OpenFlags};
+use rusqlite::{Error, params, NO_PARAMS};
 use rusqlite::types::ToSql;
-use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::path::Path;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use crate::event::Event;
 use crate::weather;
 use crate::moisture;
@@ -17,6 +17,10 @@ pub struct Database {
 
 fn to_seconds(t: &SystemTime) -> u32 {
 	t.duration_since(UNIX_EPOCH).unwrap().as_secs() as u32
+}
+
+fn to_system_time(s: u32) -> SystemTime {
+	UNIX_EPOCH + Duration::from_secs(s as u64)
 }
 
 impl Database {
@@ -81,5 +85,19 @@ impl Database {
 			&[&to_seconds(&event.timestamp) as &ToSql, &event.name, &event.value]
 		)?;
 		Ok(())
+	}
+
+	pub fn get_latest_weather(&self) -> Result<weather::WeatherEvent, Error> {
+		let conn = self.conn();
+		let mut stmt = conn.prepare(
+			"SELECT time, temperature, humidity, pressure FROM weather ORDER BY time DESC LIMIT 1")?;
+		stmt.query_row(params![], |row| {
+			Ok(weather::WeatherEvent {
+				timestamp: to_system_time(row.get(0)?),
+				temperature: row.get(1)?,
+				humidity: row.get(2)?,
+				pressure: row.get(3)?
+			})
+		})
 	}
 }
