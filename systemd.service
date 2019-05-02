@@ -5,6 +5,7 @@ Description=Automated Irrigation Service
 Type=Simple
 WorkingDirectory=/var/lib/pirrigator
 ExecStart=/usr/local/bin/pirrigator
+ExecStopPost=/usr/local/bin/reset-gpio.sh
 StandardOutput=syslog
 StandardError=syslog
 Restart=on-failure

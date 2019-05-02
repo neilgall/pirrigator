@@ -19,3 +19,4 @@ ${CP} systemd.service ${HOST}:/etc/systemd/system/pirrigator.service
 ${CP} target/arm-unknown-linux-gnueabihf/release/pirrigator ${HOST}:/usr/local/bin/pirrigator
 ssh ${HOST} systemctl daemon-reload
 ssh ${HOST} systemctl start pirrigator
+ssh ${HOST} journalctl --no-pager -n 10 -x -u pirrigator
