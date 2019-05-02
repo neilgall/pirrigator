@@ -10,10 +10,7 @@ update = 300
 device = "CE0"
 device_type = "MCP3008"
 enable_gpio = 22
-update = 10
-
-[button]
-gpio = 23
+update = 300
 
 [[moisture]]
 name = "Left"
@@ -40,9 +37,5 @@ name = "Left"
 gpio = 17
 
 [[buttons]]
-gpio = 24
-name = "Top"
-
-[[buttons]]
 gpio = 23
-name = "Two"
+name = "Top"
