@@ -34,7 +34,7 @@ impl Valves {
 			.map(|v| Valve::new(v).unwrap())
 			.collect();
 
-		println!("Initialised {} valve(s)", units.len());
+		info!("Initialised {} valve(s)", units.len());
 
 		Ok(Valves { 
 			units,

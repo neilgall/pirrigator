@@ -1,6 +1,5 @@
 use bme280::{Bme280Device, Bme280Data};
 use std::error::Error;
-use std::fmt::Display;
 use std::sync::mpsc::Sender;
 use std::thread::{JoinHandle, spawn, sleep};
 use std::time::{Duration, SystemTime};
@@ -30,11 +29,11 @@ pub struct WeatherEvent {
 }
 
 fn main(mut device: Bme280Device, channel: Sender<Event>, period: Duration) {
-	println!("Started weather sensor");
+	info!("Started weather sensor");
 	loop {
 		match device.read() {
 			Ok(data) => send_event(data, &channel),
-			Err(e) => error(e)
+			Err(e) => error!("ERROR! reading WeatherSensor: {}", e)
 		};
 		sleep(period);
 	}
@@ -50,12 +49,8 @@ fn send_event(data: Bme280Data, channel: &Sender<Event>) {
 
 	 match channel.send(Event::WeatherEvent(event)) {
 		Ok(_) => {},
-		Err(e) => error(e)
+		Err(e) => error!("ERROR! sending event from WeatherSensor: {}", e)
 	};
-}
-
-fn error<E: Display>(e: E) {
-	println!("ERROR! WeatherSensor: {}", e);
 }
 
 impl WeatherSensor {

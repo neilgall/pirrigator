@@ -21,7 +21,7 @@ impl Controller {
 			let event = rx.recv()
 				.expect("receive error");
 
-			println!("event {:?}", event);
+			debug!("event {:?}", event);
 
 			self.database.store_event(&event)
 				.expect("database store error");

@@ -58,7 +58,7 @@ impl Button {
 			Ok(GPIOData::Low) => false,
 			Ok(GPIOData::High) => true,
 			Err(e) => {
-				println!("button error {}", e);
+				error!("button error {}", e);
 				false
 			}
 		}
@@ -70,7 +70,7 @@ fn read_all<'a>(buttons: &'a Vec<Button>) -> Vec<(&'a Button, bool)> {
 }
 
 fn main(buttons: Vec<Button>, channel: Sender<Event>) {
-	println!("Started polling {} button(s)", buttons.len());
+	info!("Started polling {} button(s)", buttons.len());
 
 	let mut prev_values = read_all(&buttons);
 	loop {
@@ -97,7 +97,7 @@ fn send_event(button: &(&Button, bool), channel: &Sender<Event>) {
 
 	 match channel.send(Event::ButtonEvent(event)) {
 		Ok(_) => {},
-		Err(e) => println!("failed to send event {}", e)
+		Err(e) => error!("failed to send event {}", e)
 	};
 }
 

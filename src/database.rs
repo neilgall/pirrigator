@@ -54,7 +54,7 @@ impl Database {
 			)",
 			NO_PARAMS)?;
 
-		println!("Opened database at {}", path.to_str().unwrap());
+		info!("Opened database at {}", path.to_str().unwrap());
 		Ok(Database { 
 			pool
 		})

@@ -107,7 +107,7 @@ fn main(mcp: MCPDevice, settings: Vec<MoistureSensorSettings>, channel: Sender<E
 		.map(|sensor| Sensor::new(shared_mcp.clone(), &sensor).unwrap())
 		.collect();
 
-	println!("Started {} moisture sensor(s)", sensors.len());
+	info!("Started {} moisture sensor(s)", sensors.len());
 	loop {
 		let mut samples: Vec<Sample> = sensors.iter().map(|s| Sample::new(s)).collect();
 		collect(&mut samples, period);

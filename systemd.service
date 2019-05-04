@@ -9,6 +9,7 @@ ExecStopPost=/usr/local/bin/reset-gpio.sh
 StandardOutput=syslog
 StandardError=syslog
 Restart=on-failure
+Environment="RUST_LOG=error"
 
 [Install]
 WantedBy=multi-user.target
