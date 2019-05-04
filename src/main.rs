@@ -4,7 +4,7 @@ extern crate log;
 extern crate env_logger;
 
 use pirrigator::settings::Settings;
-use pirrigator::Pirrigator;
+use pirrigator::pirrigator::Pirrigator;
 
 fn main() {
 	env_logger::init();
