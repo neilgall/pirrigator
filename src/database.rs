@@ -109,8 +109,7 @@ impl Database {
 		})
 	}
 
-	fn get_weather_history<T>(&self, field: &str, period: TimePeriod) -> Result<TimeSeries<T>, Error>
-	where T: FromSql {
+	fn get_weather_history<T: FromSql>(&self, field: &str, period: TimePeriod) -> Result<TimeSeries<T>, Error> {
 		let conn = self.conn();
 		let mut stmt = conn.prepare(
 			&format!("SELECT time, {} from weather WHERE ? <= time AND time < ? ORDER BY time ASC", field)

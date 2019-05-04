@@ -1,7 +1,8 @@
-extern crate pirrigator;
 #[macro_use]
 extern crate log;
 extern crate env_logger;
+
+extern crate pirrigator;
 
 use pirrigator::settings::Settings;
 use pirrigator::pirrigator::Pirrigator;

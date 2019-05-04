@@ -3,7 +3,7 @@ use std::thread::{JoinHandle, spawn, sleep};
 use std::time::{Duration, SystemTime};
 use std::str::FromStr;
 use std::sync::mpsc::Sender;
-use mcp3xxx::{MCPDevice, AnalogIn};
+use mcp3xxx::{AnalogIn, MCPDevice, SharedMCPDevice};
 use crate::event::Event;
 
 pub type Measurement = u16;
@@ -16,7 +16,7 @@ pub struct ADCSettings {
 	pub update: u64
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct MoistureSensorSettings {
 	pub name: String,
 	pub channel: u8
@@ -40,22 +40,78 @@ struct Sensor {
 }
 
 impl Sensor {
-	fn new(mcp: &MCPDevice, settings: &MoistureSensorSettings) -> Result<Self, Box<Error>> {
-		let analog = mcp.single_analog_in(settings.channel)?;
+	fn new(mcp: SharedMCPDevice, settings: &MoistureSensorSettings) -> Result<Self, Box<Error>> {
+		let analog = AnalogIn::single(mcp, settings.channel)?;
 		Ok(Sensor { name: settings.name.clone(), channel: analog })
 	}
 }
 
-fn main(mcp: &mut MCPDevice, sensors: Vec<Sensor>, channel: Sender<Event>, period: Duration) {
-	println!("Started {} moisture sensor(s)", sensors.len());
-	loop {
-		for sensor in &sensors {
-			match mcp.read_value(&sensor.channel) {
-				Ok(value) => send_event(&sensor, value, &channel),
-				Err(e) => println!("ERROR! reading moisture sensor {}", e)
+struct Sample<'a> {
+	sensor: &'a Sensor,
+	data: Vec<Measurement>
+}
+
+impl<'a> Sample<'a> {
+	fn new(sensor: &'a Sensor) -> Self {
+		Sample {
+			sensor,
+			data: vec![]
+		}
+	}
+
+	fn collect(&mut self) {
+		match self.sensor.channel.read_value() {
+			Ok(value) => if value != 0 { self.data.push(value) },
+			Err(e) => error!("ERROR! reading moisture sensor {}", e)
+		}
+	}
+
+	fn mean(&self) -> Option<Measurement> {
+		if self.data.len() == 0 {
+			None
+		} else {
+			let total: Measurement = self.data.iter().sum();
+			let mean = (total as f64 / self.data.len() as f64) as Measurement;
+			Some(mean)
+		}
+	}
+}
+
+fn collect(samples: &mut Vec<Sample>, period: Duration) {
+	let until = SystemTime::now() + period;
+
+	while SystemTime::now() < until {
+		for ref mut sample in &mut *samples {
+			sample.collect();
+		}
+		sleep(Duration::from_secs(5));
+	}	
+}
+
+fn report(samples: Vec<Sample>, channel: &Sender<Event>) {
+	for sample in samples {
+		match sample.mean() {
+			None => {
+				debug!("No samples collected for moisture sensor {}", sample.sensor.name);
+			},
+			Some(value) => {
+				send_event(sample.sensor, value, &channel);
 			}
 		}
-		sleep(period);
+	}
+}
+
+fn main(mcp: MCPDevice, settings: Vec<MoistureSensorSettings>, channel: Sender<Event>, period: Duration) {
+	let shared_mcp = mcp.share();
+	let sensors: Vec<Sensor> = settings.iter()
+		.map(|sensor| Sensor::new(shared_mcp.clone(), &sensor).unwrap())
+		.collect();
+
+	println!("Started {} moisture sensor(s)", sensors.len());
+	loop {
+		let mut samples: Vec<Sample> = sensors.iter().map(|s| Sample::new(s)).collect();
+		collect(&mut samples, period);
+		report(samples, &channel);
 	}
 }
 
@@ -75,14 +131,11 @@ impl MoistureSensor {
 	pub fn new(adc: &ADCSettings, sensors: &Vec<MoistureSensorSettings>, channel: Sender<Event>) -> Result<MoistureSensor, Box<Error>> {
 		let device = mcp3xxx::device_from_str(&adc.device)?;
 		let device_type = FromStr::from_str(&adc.device_type)?;
-		let mut mcp = MCPDevice::new(device, device_type, adc.enable_gpio)?;
-
-		let analogs = sensors.iter()
-			.map(|sensor| Sensor::new(&mcp, &sensor).unwrap())
-			.collect();
+		let mcp = MCPDevice::new(device, device_type, adc.enable_gpio)?;
 
 		let period = Duration::from_secs(adc.update);
-		let thread = spawn(move || main(&mut mcp, analogs, channel, period));
+		let sensors = sensors.to_vec();
+		let thread = spawn(move || { main(mcp, sensors, channel, period); });
 
 		Ok(MoistureSensor { thread })
 	}
