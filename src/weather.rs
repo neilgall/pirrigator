@@ -17,12 +17,16 @@ pub struct WeatherSensor {
 	thread: JoinHandle<()>
 }
 
+pub type Temperature = f64;
+pub type Humidity = f64;
+pub type Pressure = f64;
+
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct WeatherEvent {
 	pub timestamp: SystemTime,
-	pub temperature: f64,
-	pub humidity: f64,
-	pub pressure: f64
+	pub temperature: Temperature,
+	pub humidity: Humidity,
+	pub pressure: Pressure
 }
 
 fn main(mut device: Bme280Device, channel: Sender<Event>, period: Duration) {

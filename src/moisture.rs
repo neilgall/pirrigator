@@ -6,6 +6,7 @@ use std::sync::mpsc::Sender;
 use mcp3xxx::{MCPDevice, AnalogIn};
 use crate::event::Event;
 
+pub type Measurement = u16;
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct ADCSettings {
@@ -30,7 +31,7 @@ pub struct MoistureSensor {
 pub struct MoistureEvent {
 	pub timestamp: SystemTime,
 	pub name: String,
-	pub value: u16
+	pub value: Measurement
 }
 
 struct Sensor {
