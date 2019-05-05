@@ -1,8 +1,3 @@
-extern crate iron;
-extern crate iron_json_response as ijr;
-extern crate logger;
-extern crate router;
-
 use crate::database::Database;
 
 use iron::{typemap, BeforeMiddleware};
@@ -40,7 +35,7 @@ pub fn insert<H: Handler>(handler: H, database: Database) -> impl Handler {
 	let mut chain = Chain::new(handler);
 	chain.link_before(logger_before);
 	chain.link_before(DbMiddleware { database });
-	chain.link_after(ijr::JsonResponseMiddleware::new());
+	chain.link_after(iron_json_response::JsonResponseMiddleware::new());
 	chain.link_after(logger_after);
 	chain	
 }

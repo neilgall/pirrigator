@@ -1,13 +1,12 @@
 extern crate iron;
-extern crate iron_json_response as ijr;
 extern crate mount;
 mod api;
 mod error;
 mod json;
+mod middleware;
 mod ui;
 
 use crate::database::Database;
-use crate::middleware;
 
 use iron::prelude::*;
 use mount::Mount;

@@ -6,7 +6,6 @@
 mod button;
 mod database;
 mod event;
-mod middleware;
 mod moisture;
 mod server;
 mod valve;

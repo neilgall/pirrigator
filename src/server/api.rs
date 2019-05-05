@@ -1,14 +1,13 @@
 use crate::database::TimePeriod;
-use crate::middleware;
 
 use iron::prelude::*;
 use iron::status;
-use middleware::DbRequestExtension;
 use router::Router;
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 use super::error::bad_request;
 use super::json::json;
+use super::middleware::DbRequestExtension;
 
 fn get_param<T: FromStr>(req: &Request, name: &str) -> IronResult<T> {
 	let param = req.extensions.get::<Router>()
