@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 iron = "0.6.0"
 router = "0.6.0"
+mount = "0.4.0"
 logger = "0.4.0"
 log = "0.4.0"
 env_logger = "0.6.1"

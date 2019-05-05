@@ -1,46 +1,22 @@
 extern crate iron;
-extern crate iron_json_response as ijr;
+extern crate mount;
 extern crate router;
 
-use crate::database::{Database, TimePeriod};
+use crate::database::TimePeriod;
 use crate::middleware;
 
 use iron::prelude::*;
 use iron::status;
-use ijr::JsonResponse;
 use middleware::DbRequestExtension;
 use router::Router;
-use serde::ser::Serialize;
-use std::error::Error;
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
+use super::error::bad_request;
+use super::json::json;
 
-#[derive(Debug)]
-struct RequestError {
-	msg: String
-}
-
-impl RequestError {
-	fn new(msg: &str) -> Self {
-		RequestError { msg: msg.to_string() }
-	}
-}
-
-impl std::fmt::Display for RequestError {
-	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-		write!(f, "{}", self.msg)
-	}
-}
-
-impl Error for RequestError {
-	fn description(&self) -> &str {
-		&self.msg
-	}
-}
-
-fn bad_request(msg: &str) -> IronError {
-	IronError::new(RequestError::new(msg), status::BadRequest)
-}
+// const index_html: [u8] = include_bytes!("../draco-starter/index.html");
+// const draco_starter_js: [u8] = include_bytes!("../draco-starter/build/draco-starter.js");
+// const draco_starter_wasm: [u8] = include_bytes!("../draco-starter/build/draco-starter_bg.wasm");
 
 fn get_param<T: FromStr>(req: &Request, name: &str) -> IronResult<T> {
 	let param = req.extensions.get::<Router>()
@@ -57,51 +33,37 @@ fn get_time_period(req: &Request) -> IronResult<TimePeriod> {
 	Ok(TimePeriod { start, end })
 }
 
-fn json_response<T: Serialize, E: Error>(result: Result<T, E>) -> IronResult<Response> {
-	let mut response = Response::new();
-	match result {
-		Ok(data) => {
-			response.set_mut(JsonResponse::json(data))
-					.set_mut(status::Ok);
-			Ok(response)
-		}
-		Err(e) => {
-			Err(bad_request(e.description()))
-		}
-	}
-}
-
 fn status(_: &mut Request) -> IronResult<Response> {
 	Ok(Response::with((status::Ok, "running")))
 }
 
 fn weather(req: &mut Request) -> IronResult<Response> {
 	let weather = req.get_database().get_latest_weather();
-	json_response(weather)
+	json(weather)
 }
 
 fn temperature_history(req: &mut Request) -> IronResult<Response> {
 	let time_period = get_time_period(req)?;
-	json_response(req.get_database().get_temperature_history(time_period))
+	json(req.get_database().get_temperature_history(time_period))
 }
 
 fn humidity_history(req: &mut Request) -> IronResult<Response> {
 	let time_period = get_time_period(req)?;
-	json_response(req.get_database().get_humidity_history(time_period))
+	json(req.get_database().get_humidity_history(time_period))
 }
 
 fn pressure_history(req: &mut Request) -> IronResult<Response> {
 	let time_period = get_time_period(req)?;
-	json_response(req.get_database().get_pressure_history(time_period))
+	json(req.get_database().get_pressure_history(time_period))
 }
 
 fn moisture_history(req: &mut Request) -> IronResult<Response> {
 	let sensor: String = get_param(req, "sensor")?;
 	let time_period = get_time_period(req)?;
-	json_response(req.get_database().get_moisture_history(&sensor, time_period))
+	json(req.get_database().get_moisture_history(&sensor, time_period))
 }
 
-pub fn run(database: Database) {
+pub fn api() -> Router {
 	let mut router = Router::new();
 	router.get("/status", status, "status");
 	router.get("/weather", weather, "weather");
@@ -109,8 +71,5 @@ pub fn run(database: Database) {
 	router.get("/humidity/:start/:end", humidity_history, "humidity history");
 	router.get("/pressure/:start/:end", pressure_history, "pressure history");
 	router.get("/moisture/:sensor/:start/:end", moisture_history, "moisture history");
-
-	Iron::new(middleware::insert(router, database))
-		.http("0.0.0.0:5000")
-		.unwrap();
+	router	
 }
