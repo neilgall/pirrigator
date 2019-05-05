@@ -1,7 +1,3 @@
-extern crate iron;
-extern crate mount;
-extern crate router;
-
 use crate::database::TimePeriod;
 use crate::middleware;
 
@@ -13,10 +9,6 @@ use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 use super::error::bad_request;
 use super::json::json;
-
-// const index_html: [u8] = include_bytes!("../draco-starter/index.html");
-// const draco_starter_js: [u8] = include_bytes!("../draco-starter/build/draco-starter.js");
-// const draco_starter_wasm: [u8] = include_bytes!("../draco-starter/build/draco-starter_bg.wasm");
 
 fn get_param<T: FromStr>(req: &Request, name: &str) -> IronResult<T> {
 	let param = req.extensions.get::<Router>()

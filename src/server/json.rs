@@ -1,6 +1,6 @@
-
 extern crate iron_json_response as ijr;
 
+use iron::headers::ContentType;
 use iron::prelude::*;
 use iron::status;
 use ijr::JsonResponse;
@@ -14,6 +14,8 @@ pub fn json<T: Serialize, E: Error>(result: Result<T, E>) -> IronResult<Response
 		Ok(data) => {
 			response.set_mut(JsonResponse::json(data))
 					.set_mut(status::Ok);
+			response.headers.set(ContentType::json());
+
 			Ok(response)
 		}
 		Err(e) => {

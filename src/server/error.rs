@@ -1,5 +1,3 @@
-extern crate iron;
-
 use iron::prelude::*;
 use iron::status;
 use std::error::Error;
