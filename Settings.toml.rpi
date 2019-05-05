@@ -10,6 +10,7 @@ update = 300
 device = "CE0"
 device_type = "MCP3008"
 enable_gpio = 22
+
 update = 300
 
 [[moisture]]

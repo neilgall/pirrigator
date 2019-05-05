@@ -8,6 +8,13 @@ use crate::event::Event;
 
 pub type Measurement = u16;
 
+const RAW_MEASUREMENT_WET: Measurement = 450;
+const RAW_MEASUREMENT_DRY: Measurement = 1023;
+const RAW_MEASUREMENT_RANGE: Measurement = RAW_MEASUREMENT_DRY - RAW_MEASUREMENT_WET;
+const CALIBRATED_WET: Measurement = 100;
+const CALIBRATED_DRY: Measurement = 0;
+const CALIBRATED_RANGE: Measurement = CALIBRATED_WET - CALIBRATED_DRY;
+
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct ADCSettings {
 	pub device: String,
@@ -77,6 +84,18 @@ impl<'a> Sample<'a> {
 	}
 }
 
+fn calibrate(m: Measurement) -> Measurement {
+	if m <= RAW_MEASUREMENT_WET {
+		CALIBRATED_WET
+	} else if m >= RAW_MEASUREMENT_DRY {
+		CALIBRATED_DRY
+	} else {
+		let raw = RAW_MEASUREMENT_RANGE - (m - RAW_MEASUREMENT_WET);
+		let scaled = ((raw as f64) / (RAW_MEASUREMENT_RANGE as f64) * (CALIBRATED_RANGE as f64)) as Measurement;
+		scaled + CALIBRATED_DRY
+	}
+}
+
 fn collect(samples: &mut Vec<Sample>, period: Duration) {
 	let until = SystemTime::now() + period;
 
@@ -90,7 +109,7 @@ fn collect(samples: &mut Vec<Sample>, period: Duration) {
 
 fn report(samples: Vec<Sample>, channel: &Sender<Event>) {
 	for sample in samples {
-		match sample.mean() {
+		match sample.mean().map(calibrate) {
 			None => {
 				debug!("No samples collected for moisture sensor {}", sample.sensor.name);
 			},
@@ -138,5 +157,30 @@ impl MoistureSensor {
 		let thread = spawn(move || { main(mcp, sensors, channel, period); });
 
 		Ok(MoistureSensor { thread })
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_calibrate_min() {
+		assert_eq!(CALIBRATED_WET, calibrate(0));
+		assert_eq!(CALIBRATED_WET, calibrate(200));
+		assert_eq!(CALIBRATED_WET, calibrate(449));
+	}
+
+	#[test]
+	fn test_calibrate_max() {
+		assert_eq!(CALIBRATED_DRY, calibrate(1024));
+		assert_eq!(CALIBRATED_DRY, calibrate(1100));
+	}
+
+	#[test]
+	fn test_calibrate_in_range() {
+		assert_eq!(25, calibrate((RAW_MEASUREMENT_DRY * 3 + RAW_MEASUREMENT_WET) / 4));
+		assert_eq!(50, calibrate((RAW_MEASUREMENT_DRY + RAW_MEASUREMENT_WET) / 2));
+		assert_eq!(75, calibrate((RAW_MEASUREMENT_DRY + RAW_MEASUREMENT_WET * 3) / 4));
 	}
 }
