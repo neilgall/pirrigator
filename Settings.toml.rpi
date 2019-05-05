@@ -16,14 +16,20 @@ update = 300
 [[moisture]]
 name = "Left"
 channel = 0
+min_reading = 470
+max_reading = 1023
 
 [[moisture]]
 name = "Centre"
 channel = 1
+min_reading = 280
+max_reading = 1023
 
 [[moisture]]
 name = "Right"
 channel = 2
+min_reading = 390
+max_reading = 1023
 
 [[valves]]
 name = "Right"

@@ -8,9 +8,6 @@ use crate::event::Event;
 
 pub type Measurement = u16;
 
-const RAW_MEASUREMENT_WET: Measurement = 450;
-const RAW_MEASUREMENT_DRY: Measurement = 1023;
-const RAW_MEASUREMENT_RANGE: Measurement = RAW_MEASUREMENT_DRY - RAW_MEASUREMENT_WET;
 const CALIBRATED_WET: Measurement = 100;
 const CALIBRATED_DRY: Measurement = 0;
 const CALIBRATED_RANGE: Measurement = CALIBRATED_WET - CALIBRATED_DRY;
@@ -26,7 +23,9 @@ pub struct ADCSettings {
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct MoistureSensorSettings {
 	pub name: String,
-	pub channel: u8
+	pub channel: u8,
+	pub min_reading: Measurement,
+	pub max_reading: Measurement
 }
 
 #[derive(Debug)]
@@ -43,13 +42,20 @@ pub struct MoistureEvent {
 
 struct Sensor {
 	name: String,
-	channel: AnalogIn
+	channel: AnalogIn,
+	pub min_reading: Measurement,
+	pub max_reading: Measurement
 }
 
 impl Sensor {
 	fn new(mcp: SharedMCPDevice, settings: &MoistureSensorSettings) -> Result<Self, Box<Error>> {
 		let analog = AnalogIn::single(mcp, settings.channel)?;
-		Ok(Sensor { name: settings.name.clone(), channel: analog })
+		Ok(Sensor { 
+			name: settings.name.clone(), 
+			channel: analog,
+			min_reading: settings.min_reading,
+			max_reading: settings.max_reading
+		})
 	}
 }
 
@@ -84,14 +90,15 @@ impl<'a> Sample<'a> {
 	}
 }
 
-fn calibrate(m: Measurement) -> Measurement {
-	if m <= RAW_MEASUREMENT_WET {
+fn calibrate(m: Measurement, min: Measurement, max: Measurement) -> Measurement {
+	if m <= min {
 		CALIBRATED_WET
-	} else if m >= RAW_MEASUREMENT_DRY {
+	} else if m >= max {
 		CALIBRATED_DRY
 	} else {
-		let raw = RAW_MEASUREMENT_RANGE - (m - RAW_MEASUREMENT_WET);
-		let scaled = ((raw as f64) / (RAW_MEASUREMENT_RANGE as f64) * (CALIBRATED_RANGE as f64)) as Measurement;
+		let range = max - min;
+		let raw = range - (m - min);
+		let scaled = ((raw as f64) / (range as f64) * (CALIBRATED_RANGE as f64)) as Measurement;
 		scaled + CALIBRATED_DRY
 	}
 }
@@ -109,9 +116,9 @@ fn collect(samples: &mut Vec<Sample>, period: Duration) {
 
 fn report(samples: Vec<Sample>, channel: &Sender<Event>) {
 	for sample in samples {
-		match sample.mean().map(calibrate) {
+		match sample.mean().map(|m| calibrate(m, sample.sensor.min_reading, sample.sensor.max_reading)) {
 			None => {
-				debug!("No samples collected for moisture sensor {}", sample.sensor.name);
+				error!("No samples collected for moisture sensor {}", sample.sensor.name);
 			},
 			Some(value) => {
 				send_event(sample.sensor, value, &channel);
@@ -166,21 +173,21 @@ mod tests {
 
 	#[test]
 	fn test_calibrate_min() {
-		assert_eq!(CALIBRATED_WET, calibrate(0));
-		assert_eq!(CALIBRATED_WET, calibrate(200));
-		assert_eq!(CALIBRATED_WET, calibrate(449));
+		assert_eq!(CALIBRATED_WET, calibrate(0, 0, 1000));
+		assert_eq!(CALIBRATED_WET, calibrate(0, 100, 1000));
+		assert_eq!(CALIBRATED_WET, calibrate(449, 450, 1000));
 	}
 
 	#[test]
 	fn test_calibrate_max() {
-		assert_eq!(CALIBRATED_DRY, calibrate(1024));
-		assert_eq!(CALIBRATED_DRY, calibrate(1100));
+		assert_eq!(CALIBRATED_DRY, calibrate(1000, 0, 1000));
+		assert_eq!(CALIBRATED_DRY, calibrate(1100, 0, 1000));
 	}
 
 	#[test]
 	fn test_calibrate_in_range() {
-		assert_eq!(25, calibrate((RAW_MEASUREMENT_DRY * 3 + RAW_MEASUREMENT_WET) / 4));
-		assert_eq!(50, calibrate((RAW_MEASUREMENT_DRY + RAW_MEASUREMENT_WET) / 2));
-		assert_eq!(75, calibrate((RAW_MEASUREMENT_DRY + RAW_MEASUREMENT_WET * 3) / 4));
+		assert_eq!(25, calibrate(800, 200, 1000));
+		assert_eq!(50, calibrate(600, 200, 1000));
+		assert_eq!(75, calibrate(400, 200, 1000));
 	}
 }
