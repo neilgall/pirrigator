@@ -2,10 +2,6 @@ use iron::prelude::*;
 use iron::status;
 use std::error::Error;
 
-// const index_html: [u8] = include_bytes!("../draco-starter/index.html");
-// const draco_starter_js: [u8] = include_bytes!("../draco-starter/build/draco-starter.js");
-// const draco_starter_wasm: [u8] = include_bytes!("../draco-starter/build/draco-starter_bg.wasm");
-
 #[derive(Debug)]
 pub struct RequestError {
 	pub msg: String
