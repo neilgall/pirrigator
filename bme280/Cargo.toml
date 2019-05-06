@@ -1,0 +1,8 @@
+[package]
+name = "bme280"
+version = "0.1.0"
+authors = ["Neil Gall <neilgall@mac.com>"]
+edition = "2018"
+
+[dependencies]
+i2cdev = "0.4.1"
