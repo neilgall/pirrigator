@@ -3,9 +3,9 @@ use iron::status;
 use iron::mime::*;
 use router::Router;
 
-lazy_static_include_bytes!(INDEX, "../draco/target/examples/svg_clock/index.html");
-lazy_static_include_bytes!(START_JS, "../draco/target/examples/svg_clock/svg_clock.js");
-lazy_static_include_bytes!(WASM, "../draco/target/examples/svg_clock/svg_clock_bg.wasm");
+lazy_static_include_bytes!(INDEX, "../ui/index.html");
+lazy_static_include_bytes!(START_JS, "../ui/target/html/release/pirrigator-ui.js");
+lazy_static_include_bytes!(WASM, "../ui/target/html/release/pirrigator-ui_bg.wasm");
 
 fn respond(data: &[u8], content_type: Mime) -> IronResult<Response> {
 	let mut response = Response::new();
