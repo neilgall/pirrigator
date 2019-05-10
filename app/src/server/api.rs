@@ -33,6 +33,11 @@ fn weather(req: &mut Request) -> IronResult<Response> {
 	json(weather)
 }
 
+fn weather_history(req: &mut Request) -> IronResult<Response> {
+	let time_period = get_time_period(req)?;
+	json(req.get_database().get_weather_history(time_period))
+}
+
 fn temperature_history(req: &mut Request) -> IronResult<Response> {
 	let time_period = get_time_period(req)?;
 	json(req.get_database().get_temperature_history(time_period))
@@ -58,6 +63,7 @@ pub fn api() -> Router {
 	let mut router = Router::new();
 	router.get("/status", status, "status");
 	router.get("/weather", weather, "weather");
+	router.get("/weather/:start/:end", weather_history, "weather history");
 	router.get("/temperature/:start/:end", temperature_history, "temperature history");
 	router.get("/humidity/:start/:end", humidity_history, "humidity history");
 	router.get("/pressure/:start/:end", pressure_history, "pressure history");

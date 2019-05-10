@@ -46,7 +46,7 @@ pub fn ui() -> Router {
 	let mut router = Router::new();
 	router.get("/", index_html, "root");
 	router.get("/index.html", index_html, "index.html");
-	router.get("/svg_clock.js", draco_starter_js, "start js");
-	router.get("/svg_clock_bg.wasm", draco_starter_wasm, "wasm blob");
+	router.get("/pirrigator-ui.js", draco_starter_js, "start js");
+	router.get("/pirrigator-ui_bg.wasm", draco_starter_wasm, "wasm blob");
 	router			
 }

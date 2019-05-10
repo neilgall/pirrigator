@@ -109,7 +109,23 @@ impl Database {
 		})
 	}
 
-	fn get_weather_history<T: FromSql>(&self, field: &str, period: TimePeriod) -> Result<TimeSeries<T>, Error> {
+	pub fn get_weather_history(&self, period: TimePeriod) -> Result<Vec<weather::WeatherEvent>, Error> {
+		let conn = self.conn();
+		let mut stmt = conn.prepare(
+			&format!("SELECT time, temperature, humidity, pressure from weather WHERE ? <= time AND time < ? ORDER BY time ASC")
+		)?;
+		let iter = stmt.query_map(params![to_seconds(&period.start), to_seconds(&period.end)], |row| {
+			Ok( weather::WeatherEvent { 
+				timestamp: to_system_time(row.get(0)?),
+				temperature: row.get(1)?,
+				humidity: row.get(2)?,
+				pressure: row.get(3)?
+			})
+		})?;
+		iter.collect()				
+	}
+
+	fn get_weather_field_history<T: FromSql>(&self, field: &str, period: TimePeriod) -> Result<TimeSeries<T>, Error> {
 		let conn = self.conn();
 		let mut stmt = conn.prepare(
 			&format!("SELECT time, {} from weather WHERE ? <= time AND time < ? ORDER BY time ASC", field)
@@ -121,15 +137,15 @@ impl Database {
 	}
 
 	pub fn get_temperature_history(&self, period: TimePeriod) -> Result<TimeSeries<weather::Temperature>, Error> {
-		self.get_weather_history("temperature", period)
+		self.get_weather_field_history("temperature", period)
 	}
 
 	pub fn get_humidity_history(&self, period: TimePeriod) -> Result<TimeSeries<weather::Temperature>, Error> {
-		self.get_weather_history("humidity", period)
+		self.get_weather_field_history("humidity", period)
 	}
 
 	pub fn get_pressure_history(&self, period: TimePeriod) -> Result<TimeSeries<weather::Temperature>, Error> {
-		self.get_weather_history("pressure", period)
+		self.get_weather_field_history("pressure", period)
 	}
 
 	pub fn get_moisture_history(&self, sensor: &str, period: TimePeriod) -> Result<TimeSeries<moisture::Measurement>, Error> {
