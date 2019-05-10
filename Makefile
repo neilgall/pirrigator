@@ -27,10 +27,13 @@ ui-serve: ui-debug
 	cp -f ui/index.html ui/target/html/debug
 	(cd ui/target/html/debug && serve)
 
-app: ui-release
+app-release: ui-release
 	(cd app && cargo build --target=arm-unknown-linux-gnueabihf --release)
 
-install: app
+run-locally: ui-debug
+	(cd app && cargo build && RUST_LOG=debug cargo run)
+
+install: app-release
 	ssh ${HOST} systemctl stop pirrigator
 	${CP} app/Settings.toml.rpi ${HOST}:/var/lib/pirrigator/Settings.toml
 	${CP} app/target/arm-unknown-linux-gnueabihf/release/pirrigator ${HOST}:/usr/local/bin/pirrigator
