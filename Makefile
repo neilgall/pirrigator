@@ -8,9 +8,9 @@ ui-release:
 		cargo build --target wasm32-unknown-unknown --release && \
 		wasm-bindgen target/wasm32-unknown-unknown/release/pirrigator-ui.wasm \
 			--out-dir target/html/release \
-			--no-modules \
-			--no-modules-global \
-			Pirrigator \
+			--no-typescript \
+			--debug \
+			--web \
 	)
 
 ui-debug:
@@ -20,6 +20,7 @@ ui-debug:
 			--out-dir target/html/debug \
 			--no-modules \
 			--no-modules-global \
+			--no-typescript \
 			Pirrigator \
 	)
 
@@ -30,7 +31,7 @@ ui-serve: ui-debug
 app-release: ui-release
 	(cd app && cargo build --target=arm-unknown-linux-gnueabihf --release)
 
-run-locally: ui-debug
+run-locally: ui-release
 	(cd app && cargo build && RUST_LOG=debug cargo run)
 
 install: app-release

@@ -1,12 +1,14 @@
-<!doctype html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="utf-8">
-    <title>Pirrigator</title>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
   </head>
   <body>
-    <main></main>
-    <script src="pirrigator-ui.js"></script>
-    <script>Pirrigator('./pirrigator-ui_bg.wasm').then(() => Pirrigator.start());</script>
+    <script type="module">
+      import { default as init } from './pirrigator-ui.js';
+      async function run() {
+        await init('./pirrigator-ui_bg.wasm');
+      }
+      run();
+    </script>
   </body>
 </html>
