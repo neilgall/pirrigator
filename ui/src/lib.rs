@@ -1,8 +1,8 @@
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate seed;
+#[macro_use] extern crate serde_derive;
+#[macro_use] extern crate seed;
+extern crate chrono;
 
+use chrono::prelude::*;
 use futures::Future;
 use seed::prelude::*;
 use seed::{Method, Request};
@@ -35,8 +35,10 @@ enum Message {
 
 fn render_weather(model: &Pirrigator) -> El<Message> {
     fn weather_row(w: &Weather) -> El<Message> {
+        let unixtime = w.timestamp.duration_since(UNIX_EPOCH).unwrap();
+        let date = Utc.timestamp(unixtime.as_secs() as i64, unixtime.subsec_nanos()).to_rfc2822();
         tr![
-            td![w.timestamp.duration_since(UNIX_EPOCH).unwrap().as_secs().to_string()],
+            td![date],
             td![format!("{:.1}°C", w.temperature)],
             td![format!("{:.1}%", w.humidity)],
             td![format!("{:.0}mBar", w.pressure)]
