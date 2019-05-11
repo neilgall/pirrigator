@@ -44,19 +44,23 @@ impl Weather {
             button![simple_ev(Ev::Click, Message::Fetch(DAY)), "Last Day"],
             button![simple_ev(Ev::Click, Message::Fetch(WEEK)), "Last Week"],
             button![simple_ev(Ev::Click, Message::Fetch(MONTH)), "Last Month"],
-            table![
-                thead![
-                    tr![
-                        th!["Time"],
-                        th!["Temperature"],
-                        th!["Humidity"],
-                        th!["Pressure"]
+            if let Some(e) = &self.error {
+                p![e]        
+            } else {
+                table![
+                    thead![
+                        tr![
+                            th!["Time"],
+                            th!["Temperature"],
+                            th!["Humidity"],
+                            th!["Pressure"]
+                        ],
                     ],
-                ],
-                tbody![
-                    weather_items
+                    tbody![
+                        weather_items
+                    ]
                 ]
-            ]
+            }
         ]
     }
 

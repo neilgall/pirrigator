@@ -23,10 +23,8 @@ enum Message {
 
 fn update(msg: Message, model: &mut Pirrigator) -> Update<Message> {
     match msg {
-        Message::Weather(msg) =>
-            model.weather.update(msg).map(Message::Weather),
-        Message::Sensors(msg) =>
-            model.sensors.update(msg).map(Message::Sensors)
+        Message::Weather(msg) => model.weather.update(msg).map(Message::Weather),
+        Message::Sensors(msg) => model.sensors.update(msg).map(Message::Sensors)
     }
 }
 

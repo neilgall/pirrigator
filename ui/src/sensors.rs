@@ -61,7 +61,9 @@ impl Sensors {
         let sensors: Vec<El<Message>> = self.sensors.iter().map(|(n, s)| render_sensor(n, s)).collect();
         div![
             h2!["Sensors"],
-            if self.sensors.is_empty() {
+            if let Some(e) = &self.error {
+                p![e]
+            } else if self.sensors.is_empty() {
                 button![simple_ev(Ev::Click, Message::FetchNames), "Get Sensors"]
             } else {
                 div![sensors]
