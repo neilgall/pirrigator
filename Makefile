@@ -5,28 +5,27 @@ all: app
 
 ui-release:
 	(cd ui && \
-		cargo build --target wasm32-unknown-unknown --release && \
-		wasm-bindgen target/wasm32-unknown-unknown/release/pirrigator-ui.wasm \
+		cargo build --target wasm32-unknown-unknown && \
+		wasm-pack build --release \
+		    --no-typescript \
+			--target no-modules \
+			--out-name pirrigator-ui \
 			--out-dir target/html/release \
-			--no-typescript \
-			--debug \
-			--web \
 	)
 
 ui-debug:
 	(cd ui && \
 		cargo build --target wasm32-unknown-unknown && \
-		wasm-bindgen target/wasm32-unknown-unknown/debug/pirrigator-ui.wasm \
+		wasm-pack build --dev \
+		    --no-typescript \
+			--target no-modules \
+			--out-name pirrigator-ui \
 			--out-dir target/html/debug \
-			--no-modules \
-			--no-modules-global \
-			--no-typescript \
-			Pirrigator \
 	)
 
 ui-serve: ui-debug
 	cp -f ui/index.html ui/target/html/debug
-	(cd ui/target/html/debug && serve)
+	(cd ui/target/html/debug && microserver --port 5000)
 
 app-release: ui-release
 	(cd app && cargo build --target=arm-unknown-linux-gnueabihf --release)
