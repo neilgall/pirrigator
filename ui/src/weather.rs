@@ -2,12 +2,7 @@ use futures::Future;
 use seed::prelude::*;
 use seed::{Method, Request};
 use std::time::SystemTime;
-use crate::utils::render_system_time;
-
-const HOUR: u32 = 3600;
-const DAY: u32 = 86400;
-const WEEK: u32 = 86400*7;
-const MONTH: u32 = 86400*30;
+use crate::utils::*;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct WeatherRow {

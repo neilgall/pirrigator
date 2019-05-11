@@ -1,36 +1,40 @@
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate seed;
-extern crate chrono;
 
+mod sensors;
 mod weather;
 mod utils;
 
 use seed::prelude::*;
+use sensors::Sensors;
 use weather::Weather;
 
 #[derive(Default, Debug)]
 struct Pirrigator {
     weather: Weather,
+    sensors: Sensors
 }
 
 #[derive(Clone)]
 enum Message {
-    Weather(weather::Message)
+    Weather(weather::Message),
+    Sensors(sensors::Message)
 }
 
 fn update(msg: Message, model: &mut Pirrigator) -> Update<Message> {
     match msg {
-        Message::Weather(msg) => {
-            model.weather.update(msg).map(Message::Weather);
-            Render.into()
-        }
+        Message::Weather(msg) =>
+            model.weather.update(msg).map(Message::Weather),
+        Message::Sensors(msg) =>
+            model.sensors.update(msg).map(Message::Sensors)
     }
 }
 
 fn view(model: &Pirrigator) -> El<Message> {
     div![
         h1!["Pirrigator"],
-        model.weather.render().map_message(Message::Weather)
+        model.weather.render().map_message(Message::Weather),
+        model.sensors.render().map_message(Message::Sensors)
     ]
 }
 
