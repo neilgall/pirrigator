@@ -53,6 +53,10 @@ fn pressure_history(req: &mut Request) -> IronResult<Response> {
 	json(req.get_database().get_pressure_history(time_period))
 }
 
+fn moisture_sensors(req: &mut Request) -> IronResult<Response> {
+	json(req.get_database().get_moisture_sensors())
+}
+
 fn moisture_history(req: &mut Request) -> IronResult<Response> {
 	let sensor: String = get_param(req, "sensor")?;
 	let time_period = get_time_period(req)?;
@@ -67,6 +71,7 @@ pub fn api() -> Router {
 	router.get("/temperature/:start/:end", temperature_history, "temperature history");
 	router.get("/humidity/:start/:end", humidity_history, "humidity history");
 	router.get("/pressure/:start/:end", pressure_history, "pressure history");
+	router.get("/moisture/sensors", moisture_sensors, "moisture sensors");
 	router.get("/moisture/:sensor/:start/:end", moisture_history, "moisture history");
 	router	
 }

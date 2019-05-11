@@ -148,6 +148,13 @@ impl Database {
 		self.get_weather_field_history("pressure", period)
 	}
 
+	pub fn get_moisture_sensors(&self) -> Result<Vec<String>, Error> {
+		let conn = self.conn();
+		let mut stmt = conn.prepare("SELECT DISTINCT sensor FROM moisture")?;
+		let iter = stmt.query_map(NO_PARAMS, |row| Ok(row.get(0)?))?;
+		iter.collect()
+	}
+
 	pub fn get_moisture_history(&self, sensor: &str, period: TimePeriod) -> Result<TimeSeries<moisture::Measurement>, Error> {
 		let conn = self.conn();
 		let mut stmt = conn.prepare(
