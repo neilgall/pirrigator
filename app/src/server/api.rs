@@ -3,19 +3,10 @@ use crate::database::TimePeriod;
 use iron::prelude::*;
 use iron::status;
 use router::Router;
-use std::str::FromStr;
 use std::time::{Duration, SystemTime};
-use super::error::bad_request;
+use super::get_param;
 use super::json::json;
 use super::middleware::DbRequestExtension;
-
-fn get_param<T: FromStr>(req: &Request, name: &str) -> IronResult<T> {
-	let param = req.extensions.get::<Router>()
-		.and_then(|params| { params.find(name) })
-		.ok_or(bad_request(&format!("parameter {} missing", name)))?;
-	let value = param.parse().map_err(|_| { bad_request(&format!("cannot parse parameter {}", name)) })?;
-	Ok(value)
-}
 
 fn get_time_period(req: &Request) -> IronResult<TimePeriod> {
 	let now = SystemTime::now();
