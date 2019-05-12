@@ -16,6 +16,7 @@ pub struct WeatherRow {
 #[derive(Clone, Debug)]
 pub enum Model {
     NotLoaded,
+    Loading,
     Loaded(Vec<WeatherRow>),
     Failed(String)
 }
@@ -51,6 +52,8 @@ impl Model {
             match self {
                 Model::NotLoaded =>
                     p!["Select a time range"],
+                Model::Loading =>
+                    p!["Loading..."],
                 Model::Failed(e) =>
                     p![e],
                 Model::Loaded(data) =>
@@ -69,11 +72,11 @@ impl Model {
     pub fn update(&mut self, msg: Message) -> Update<Message> {
         match msg {
             Message::Fetch(t) => {
-                *self = Model::NotLoaded;
+                *self = Model::Loading;
                 Update::with_future_msg(self.fetch(t)).skip()
             }
             Message::Fetched(rows) => {
-                *self = Model::Loaded(rows);
+                *self = if rows.is_empty() { Model::NotLoaded } else { Model::Loaded(rows) };
                 Render.into()
             }
 

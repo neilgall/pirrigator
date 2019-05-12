@@ -17,6 +17,7 @@ type SensorData = Vec<SensorRow>;
 #[derive(Clone, Debug)]
 pub enum Model {
     NotLoaded,
+    Loading,
     Loaded(HashMap<String, SensorData>),
     Failed(String)
 }
@@ -69,6 +70,8 @@ impl Model {
             match self {
                 Model::NotLoaded => 
                     button![simple_ev(Ev::Click, Message::FetchNames), "Get Sensors"],
+                Model::Loading =>
+                    p!["Loading..."],
                 Model::Failed(e) =>
                     p![e],
                 Model::Loaded(data) => {
@@ -82,7 +85,7 @@ impl Model {
     pub fn update(&mut self, msg: Message) -> Update<Message> {
         match msg {
             Message::FetchNames => {
-                *self = Model::NotLoaded;
+                *self = Model::Loading;
                 Update::with_future_msg(self.fetch_names()).skip()
             }
             Message::FetchedNames(names) => {
