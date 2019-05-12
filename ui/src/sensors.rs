@@ -14,10 +14,15 @@ pub struct SensorRow {
 
 type SensorData = Vec<SensorRow>;
 
-#[derive(Clone, Debug, Default, Deserialize)]
-pub struct Sensors {
-    sensors: HashMap<String, SensorData>,
-    error: Option<String>
+#[derive(Clone, Debug)]
+pub enum Model {
+    NotLoaded,
+    Loaded(HashMap<String, SensorData>),
+    Failed(String)
+}
+
+impl Default for Model {
+    fn default() -> Self { Model::NotLoaded }
 }
 
 #[derive(Clone)]
@@ -57,17 +62,19 @@ fn render_sensor(name: &str, data: &SensorData) -> El<Message> {
     ]
 }
 
-impl Sensors {
+impl Model {
     pub fn render(&self) -> El<Message> {
-        let sensors: Vec<El<Message>> = self.sensors.iter().map(|(n, s)| render_sensor(n, s)).collect();
         div![
             h2!["Sensors"],
-            if let Some(e) = &self.error {
-                p![e]
-            } else if self.sensors.is_empty() {
-                button![simple_ev(Ev::Click, Message::FetchNames), "Get Sensors"]
-            } else {
-                div![sensors]
+            match self {
+                Model::NotLoaded => 
+                    button![simple_ev(Ev::Click, Message::FetchNames), "Get Sensors"],
+                Model::Failed(e) =>
+                    p![e],
+                Model::Loaded(data) => {
+                    let els: Vec<El<Message>> = data.iter().map(|(n, s)| render_sensor(n, s)).collect();
+                    div![els]
+                }
             }
         ]
     }
@@ -75,25 +82,25 @@ impl Sensors {
     pub fn update(&mut self, msg: Message) -> Update<Message> {
         match msg {
             Message::FetchNames => {
-                self.sensors = HashMap::new();
-                self.error = None;
+                *self = Model::NotLoaded;
                 Update::with_future_msg(self.fetch_names()).skip()
             }
             Message::FetchedNames(names) => {
-                self.sensors = HashMap::from_iter(names.iter().map(|name| (name.to_string(), vec![])));
-                self.error = None;
+                let sensors = HashMap::from_iter(names.iter().map(|name| (name.to_string(), vec![])));
+                *self = Model::Loaded(sensors);
                 Render.into()
             }
             Message::FetchData(name, t) => {
                 Update::with_future_msg(self.fetch_data(name, t)).skip()
             }
             Message::FetchedData(name, data) => {
-                self.sensors.insert(name, data);
+                if let Model::Loaded(ref mut sensors) = self {
+                    sensors.insert(name, data);
+                }
                 Render.into()
             }
             Message::Failed(e) => {
-                self.sensors = HashMap::new();
-                self.error = e.as_string();
+                *self = Model::Failed(e.as_string().unwrap_or("Unknown error".to_string()));
                 Render.into()
             }
         }

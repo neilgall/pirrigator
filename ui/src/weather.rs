@@ -13,10 +13,15 @@ pub struct WeatherRow {
     pressure: f64,
 }
 
-#[derive(Clone, Debug, Default, Deserialize)]
-pub struct Weather {
-    rows: Vec<WeatherRow>,
-    error: Option<String>
+#[derive(Clone, Debug)]
+pub enum Model {
+    NotLoaded,
+    Loaded(Vec<WeatherRow>),
+    Failed(String)
+}
+
+impl Default for Model {
+    fn default() -> Self { Model::NotLoaded }
 }
 
 #[derive(Clone)]
@@ -26,16 +31,16 @@ pub enum Message {
     Failed(JsValue)
 }
 
-impl Weather {
-    fn chart(&self, y_origin_zero: bool, f: &Fn(&WeatherRow) -> f64) -> chart::Chart {
-        chart::Chart {
-            width: 600,
-            height: 200,
-            y_origin_zero,
-            data: self.rows.iter().map(|r| chart::DataPoint { time: r.timestamp, value: f(r) }).collect()
-        }
+fn chart(data: &Vec<WeatherRow>, y_origin_zero: bool, f: &Fn(&WeatherRow) -> f64) -> chart::Chart {
+    chart::Chart {
+        width: 600,
+        height: 200,
+        y_origin_zero,
+        data: data.iter().map(|r| chart::DataPoint { time: r.timestamp, value: f(r) }).collect()
     }
+}
 
+impl Model {
     pub fn render(&self) -> El<Message> {
         div![
             h2!["Weather"],
@@ -43,19 +48,20 @@ impl Weather {
             button![simple_ev(Ev::Click, Message::Fetch(DAY)), "Last Day"],
             button![simple_ev(Ev::Click, Message::Fetch(WEEK)), "Last Week"],
             button![simple_ev(Ev::Click, Message::Fetch(MONTH)), "Last Month"],
-            if let Some(e) = &self.error {
-                p![e]        
-            } else if self.rows.is_empty() {
-                p!["Select a time range"]
-            } else {
-                div![
-                    h3!["Temperature"],
-                    self.chart(true, &|r| r.temperature).render().map_message(|_| Message::Fetch(HOUR)),
-                    h3!["Humidity"],
-                    self.chart(true, &|r| r.humidity).render().map_message(|_| Message::Fetch(HOUR)),
-                    h3!["Barometric Pressure"],
-                    self.chart(false, &|r| r.pressure).render().map_message(|_| Message::Fetch(HOUR))
-                ]
+            match self {
+                Model::NotLoaded =>
+                    p!["Select a time range"],
+                Model::Failed(e) =>
+                    p![e],
+                Model::Loaded(data) =>
+                    div![
+                        h3!["Temperature"],
+                        chart(data, true, &|r| r.temperature).render().map_message(|_| Message::Fetch(HOUR)),
+                        h3!["Humidity"],
+                        chart(data, true, &|r| r.humidity).render().map_message(|_| Message::Fetch(HOUR)),
+                        h3!["Barometric Pressure"],
+                        chart(data, false, &|r| r.pressure).render().map_message(|_| Message::Fetch(HOUR))
+                    ]
             }
         ]
     }
@@ -63,19 +69,16 @@ impl Weather {
     pub fn update(&mut self, msg: Message) -> Update<Message> {
         match msg {
             Message::Fetch(t) => {
-                self.rows = vec![];
-                self.error = None;
+                *self = Model::NotLoaded;
                 Update::with_future_msg(self.fetch(t)).skip()
             }
             Message::Fetched(rows) => {
-                self.rows = rows;
-                self.error = None;
+                *self = Model::Loaded(rows);
                 Render.into()
             }
 
             Message::Failed(e) => {
-                self.rows = vec![];
-                self.error = e.as_string();
+                *self = Model::Failed(e.as_string().unwrap_or("Unknown error".to_string()));
                 Render.into()
             }
         }

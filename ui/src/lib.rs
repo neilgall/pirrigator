@@ -7,13 +7,11 @@ mod weather;
 mod utils;
 
 use seed::prelude::*;
-use sensors::Sensors;
-use weather::Weather;
 
 #[derive(Default, Debug)]
 struct Pirrigator {
-    weather: Weather,
-    sensors: Sensors
+    weather: weather::Model,
+    sensors: sensors::Model
 }
 
 #[derive(Clone)]
