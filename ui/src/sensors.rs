@@ -4,6 +4,7 @@ use seed::{Method, Request};
 use std::iter::FromIterator;
 use std::time::SystemTime;
 use crate::utils::*;
+use crate::chart;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct SensorRow {
@@ -29,31 +30,26 @@ pub enum Message {
 }
 
 fn render_sensor(name: &str, data: &SensorData) -> El<Message> {
-    fn row(row: &SensorRow) -> El<Message> {
-        tr![
-            td![render_system_time(&row.timestamp)],
-            td![format!("{}", row.value)]
-        ]
+    fn chart(data: &SensorData) -> chart::Chart {
+        chart::Chart {
+            width: 600,
+            height: 200,
+            data: data.iter().map(|SensorRow { timestamp: time, value }| chart::DataPoint { 
+                time: time.clone(), 
+                value: value.clone() as f64
+            }).collect()
+        }
     }
-    let rows: Vec<El<Message>> = data.iter().map(row).collect();
-
     div![
         h2![name],
         button![simple_ev(Ev::Click, Message::FetchData(name.to_string(), HOUR)), "Last Hour"],
         button![simple_ev(Ev::Click, Message::FetchData(name.to_string(), DAY)), "Last Day"],
         button![simple_ev(Ev::Click, Message::FetchData(name.to_string(), WEEK)), "Last Week"],
         button![simple_ev(Ev::Click, Message::FetchData(name.to_string(), MONTH)), "Last Month"],
-        table![
-            thead![
-                tr![
-                    th!["Time"],
-                    th!["Reading"],
-                ],
-            ],
-            tbody![rows]
+        div![
+            chart(&data).render().map_message(|_| Message::FetchNames)
         ]
     ]
-
 }
 
 impl Sensors {
