@@ -14,10 +14,6 @@ pub fn to_utc(system_time: &SystemTime) -> DateTime<Utc> {
     Utc.timestamp(unixtime.as_secs() as i64, unixtime.subsec_nanos())
 }
 
-pub fn render_system_time(system_time: &SystemTime) -> String {
-	to_utc(system_time).to_rfc2822()
-}
-
 pub trait FloatIterExt {
 	fn min_value(&mut self) -> f64;
 	fn max_value(&mut self) -> f64;
@@ -29,5 +25,33 @@ impl<T> FloatIterExt for T where T: Iterator<Item=f64> {
 	}
 	fn max_value(&mut self) -> f64 {
 		self.fold(f64::NAN, f64::max)
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::*;
+	use std::f64;
+
+	#[test]
+	fn test_max_value() {
+		let data: Vec<f64> = vec![54.0, 0.0, -34.33, 101.101, 123.4, 99.44, -3.0];
+		assert_eq!(123.4, data.iter().cloned().max_value());
+	}
+
+	#[test]
+	fn test_min_value() {
+		let data: Vec<f64> = vec![54.0, 0.0, -34.33, 101.101, 123.4, 99.44, -3.0];
+		assert_eq!(-34.33, data.iter().cloned().min_value());
+	}
+
+	#[test]
+	fn test_max_value_empty() {
+		assert!(vec![].iter().cloned().max_value().is_nan());
+	}
+
+	#[test]
+	fn test_min_value_empty() {
+		assert!(vec![].iter().cloned().min_value().is_nan());
 	}
 }

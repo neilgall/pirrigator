@@ -27,10 +27,11 @@ pub enum Message {
 }
 
 impl Weather {
-    fn chart(&self, f: &Fn(&WeatherRow) -> f64) -> chart::Chart {
+    fn chart(&self, y_origin_zero: bool, f: &Fn(&WeatherRow) -> f64) -> chart::Chart {
         chart::Chart {
             width: 600,
             height: 200,
+            y_origin_zero,
             data: self.rows.iter().map(|r| chart::DataPoint { time: r.timestamp, value: f(r) }).collect()
         }
     }
@@ -47,11 +48,11 @@ impl Weather {
             } else {
                 div![
                     h3!["Temperature"],
-                    self.chart(&|r| r.temperature).render().map_message(|_| Message::Fetch(HOUR)),
+                    self.chart(true, &|r| r.temperature).render().map_message(|_| Message::Fetch(HOUR)),
                     h3!["Humidity"],
-                    self.chart(&|r| r.humidity).render().map_message(|_| Message::Fetch(HOUR)),
+                    self.chart(true, &|r| r.humidity).render().map_message(|_| Message::Fetch(HOUR)),
                     h3!["Barometric Pressure"],
-                    self.chart(&|r| r.pressure).render().map_message(|_| Message::Fetch(HOUR))
+                    self.chart(false, &|r| r.pressure).render().map_message(|_| Message::Fetch(HOUR))
                 ]
             }
         ]

@@ -34,6 +34,7 @@ fn render_sensor(name: &str, data: &SensorData) -> El<Message> {
         chart::Chart {
             width: 600,
             height: 200,
+            y_origin_zero: true,
             data: data.iter().map(|SensorRow { timestamp: time, value }| chart::DataPoint { 
                 time: time.clone(), 
                 value: value.clone() as f64
