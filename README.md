@@ -1,7 +1,9 @@
 # Raspberry Pi Greenhouse Automation in Rust
 
-This is my little project to automate watering my tomatoes while learning Rust. So far the electronics are built and I'm working on a modular code structure where each device runs in its own thread and communicates by message passing. I'm gathering all the sensor data in an sqlite database, from which I hope to draw graphs and serve over HTTP.
+This is my little project to automate watering my tomatoes while learning Rust. So far we have
+* gathering data via hardware sensors
+* storing the data in an sqlite database
+* serving the data via a web JSON API
+* serving a WebAssembly UI to access this API and present the data
 
-Right now it expects a couple of my other projects in the same parent directory:
-* https://github.com/neilgall/rust-mcp3xxx
-* https://github.com/neilgall/rust-bme280
+I recommend following my sequence of Pirrigator posts on [dev.to](https://dev.to/neilgall).
