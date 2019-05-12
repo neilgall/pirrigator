@@ -4,7 +4,7 @@ extern crate rusqlite;
 
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Error, params, NO_PARAMS};
-use rusqlite::types::{FromSql, ToSql};
+use rusqlite::types::ToSql;
 use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use crate::event::Event;
@@ -21,7 +21,7 @@ pub struct TimePeriod {
 }
 
 pub type UnixTime = u32;
-pub type TimeSeries<T> = Vec<(UnixTime, T)>;
+pub type TimeSeries<T> = Vec<(SystemTime, T)>;
 
 fn to_seconds(t: &SystemTime) -> UnixTime {
 	t.duration_since(UNIX_EPOCH).unwrap().as_secs() as UnixTime
@@ -125,29 +125,6 @@ impl Database {
 		iter.collect()				
 	}
 
-	fn get_weather_field_history<T: FromSql>(&self, field: &str, period: TimePeriod) -> Result<TimeSeries<T>, Error> {
-		let conn = self.conn();
-		let mut stmt = conn.prepare(
-			&format!("SELECT time, {} from weather WHERE ? <= time AND time < ? ORDER BY time ASC", field)
-		)?;
-		let iter = stmt.query_map(params![to_seconds(&period.start), to_seconds(&period.end)], |row| {
-			Ok( (row.get(0)?, row.get(1)?) )
-		})?;
-		iter.collect()
-	}
-
-	pub fn get_temperature_history(&self, period: TimePeriod) -> Result<TimeSeries<weather::Temperature>, Error> {
-		self.get_weather_field_history("temperature", period)
-	}
-
-	pub fn get_humidity_history(&self, period: TimePeriod) -> Result<TimeSeries<weather::Temperature>, Error> {
-		self.get_weather_field_history("humidity", period)
-	}
-
-	pub fn get_pressure_history(&self, period: TimePeriod) -> Result<TimeSeries<weather::Temperature>, Error> {
-		self.get_weather_field_history("pressure", period)
-	}
-
 	pub fn get_moisture_sensors(&self) -> Result<Vec<String>, Error> {
 		let conn = self.conn();
 		let mut stmt = conn.prepare("SELECT DISTINCT sensor FROM moisture")?;
@@ -161,7 +138,7 @@ impl Database {
 			"SELECT time, value from moisture WHERE sensor == ? AND ? <= time AND time < ? ORDER BY time ASC"
 		)?;
 		let iter = stmt.query_map(params![&sensor, to_seconds(&period.start), to_seconds(&period.end)], |row| {
-			Ok( (row.get(0)?, row.get(1)?) )
+			Ok( (to_system_time(row.get(0)?), row.get(1)?) )
 		})?;
 		iter.collect()
 	}
