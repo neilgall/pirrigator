@@ -45,6 +45,8 @@ impl Weather {
             button![simple_ev(Ev::Click, Message::Fetch(MONTH)), "Last Month"],
             if let Some(e) = &self.error {
                 p![e]        
+            } else if self.rows.is_empty() {
+                p!["Select a time range"]
             } else {
                 div![
                     h3!["Temperature"],

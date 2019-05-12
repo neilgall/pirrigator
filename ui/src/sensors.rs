@@ -48,7 +48,11 @@ fn render_sensor(name: &str, data: &SensorData) -> El<Message> {
         button![simple_ev(Ev::Click, Message::FetchData(name.to_string(), WEEK)), "Last Week"],
         button![simple_ev(Ev::Click, Message::FetchData(name.to_string(), MONTH)), "Last Month"],
         div![
-            chart(&data).render().map_message(|_| Message::FetchNames)
+            if data.is_empty() {
+                p!["Select a time range"]
+            } else {
+                chart(&data).render().map_message(|_| Message::FetchNames)
+            }
         ]
     ]
 }
