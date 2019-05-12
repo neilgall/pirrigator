@@ -1,6 +1,7 @@
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate seed;
 
+mod chart;
 mod sensors;
 mod weather;
 mod utils;
@@ -18,7 +19,7 @@ struct Pirrigator {
 #[derive(Clone)]
 enum Message {
     Weather(weather::Message),
-    Sensors(sensors::Message)
+    Sensors(sensors::Message),
 }
 
 fn update(msg: Message, model: &mut Pirrigator) -> Update<Message> {

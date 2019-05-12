@@ -2,6 +2,7 @@ use futures::Future;
 use seed::prelude::*;
 use seed::{Method, Request};
 use std::time::SystemTime;
+use crate::chart;
 use crate::utils::*;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -26,18 +27,15 @@ pub enum Message {
 }
 
 impl Weather {
-    pub fn render(&self) -> El<Message> {
-        fn row(w: &WeatherRow) -> El<Message> {
-            tr![
-                td![render_system_time(w.timestamp)],
-                td![format!("{:.1}°C", w.temperature)],
-                td![format!("{:.1}%", w.humidity)],
-                td![format!("{:.0}mBar", w.pressure)]
-            ]
+    fn temperature_chart(&self) -> chart::Chart {
+        chart::Chart {
+            width: 600,
+            height: 200,
+            data: self.rows.iter().map(|r| chart::DataPoint { time: r.timestamp, value: r.temperature }).collect()
         }
+    }
 
-        let weather_items: Vec<El<Message>> = self.rows.iter().map(row).collect();
-
+    pub fn render(&self) -> El<Message> {
         div![
             h2!["Weather"],
             button![simple_ev(Ev::Click, Message::Fetch(HOUR)), "Last Hour"],
@@ -47,18 +45,8 @@ impl Weather {
             if let Some(e) = &self.error {
                 p![e]        
             } else {
-                table![
-                    thead![
-                        tr![
-                            th!["Time"],
-                            th!["Temperature"],
-                            th!["Humidity"],
-                            th!["Pressure"]
-                        ],
-                    ],
-                    tbody![
-                        weather_items
-                    ]
+                div![
+                    self.temperature_chart().render().map_message(|_| Message::Fetch(HOUR))
                 ]
             }
         ]

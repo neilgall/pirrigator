@@ -31,7 +31,7 @@ pub enum Message {
 fn render_sensor(name: &str, data: &SensorData) -> El<Message> {
     fn row(row: &SensorRow) -> El<Message> {
         tr![
-            td![render_system_time(row.timestamp)],
+            td![render_system_time(&row.timestamp)],
             td![format!("{}", row.value)]
         ]
     }
