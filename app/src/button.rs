@@ -15,7 +15,15 @@ pub struct ButtonSettings {
 }
 
 pub struct Buttons {
-	thread: JoinHandle<()>
+	thread: Option<JoinHandle<()>>
+}
+
+impl Drop for Buttons {
+	fn drop(&mut self) {
+		if let Some(thread) = self.thread.take() {
+			thread.join().unwrap();
+		}
+	}
 }
 
 #[derive(Debug)]
@@ -107,6 +115,8 @@ impl Buttons {
 			.map(|b| Button::new(b).unwrap())
 			.collect();
 		let thread = spawn(move || { main(buttons, channel) });
-		Ok(Buttons { thread })
+		Ok(Buttons { 
+			thread: Some(thread)
+		})
 	}
 }

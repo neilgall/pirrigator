@@ -21,22 +21,29 @@ fn traverse<T, U, E>(t: &Option<T>, f: &Fn(&T) -> Result<U, E>) -> Result<Option
 }
 
 pub struct Pirrigator {
-	thread: JoinHandle<()>,
+	thread: Option<JoinHandle<()>>,
 	database: Database
+}
+
+impl Drop for Pirrigator {
+	fn drop(&mut self) {
+		if let Some(thread) = self.thread.take() {
+			thread.join().unwrap();
+		}
+	}
 }
 
 impl Pirrigator {
 	pub fn new(s: Settings) -> Result<Pirrigator, Box<Error>> {
 		let (tx, rx) = mpsc::channel();
+		let db = Database::new(Path::new(&s.database.path))?;
 
 		let weather = traverse(&s.weather, &|w| WeatherSensor::new(&w, tx.clone()))?;
 
 		let moisture = traverse(&s.adc, &|adc| MoistureSensor::new(&adc, &s.moisture, tx.clone()))?;
 
 		let buttons = Buttons::new(&s.buttons, tx.clone())?;
-		let valves = Valves::new(&s.valves)?;
-
-		let db = Database::new(Path::new(&s.database.path))?;
+		let valves = Valves::new(&s.valves, db.clone())?;
 
 		let mut controller = Controller {
 			database: db.clone(),
@@ -49,7 +56,7 @@ impl Pirrigator {
 		let thread = spawn(move || controller.run(rx));
 
 		return Ok(Pirrigator { 
-			thread,
+			thread: Some(thread),
 			database: db
 		})
 	}

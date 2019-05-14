@@ -30,7 +30,7 @@ pub struct MoistureSensorSettings {
 
 #[derive(Debug)]
 pub struct MoistureSensor {
-	thread: JoinHandle<()>
+	thread: Option<JoinHandle<()>>
 }
 
 #[derive(Debug)]
@@ -45,6 +45,14 @@ struct Sensor {
 	channel: AnalogIn,
 	pub min_reading: Measurement,
 	pub max_reading: Measurement
+}
+
+impl Drop for MoistureSensor {
+	fn drop(&mut self) {
+		if let Some(thread) = self.thread.take() {
+			thread.join().unwrap();
+		}
+	}
 }
 
 impl Sensor {
@@ -163,7 +171,9 @@ impl MoistureSensor {
 		let sensors = sensors.to_vec();
 		let thread = spawn(move || { main(mcp, sensors, channel, period); });
 
-		Ok(MoistureSensor { thread })
+		Ok(MoistureSensor { 
+			thread: Some(thread)
+		})
 	}
 }
 

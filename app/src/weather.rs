@@ -13,7 +13,7 @@ pub struct WeatherSensorSettings {
 }
 
 pub struct WeatherSensor {
-	thread: JoinHandle<()>
+	thread: Option<JoinHandle<()>>
 }
 
 pub type Temperature = f64;
@@ -26,6 +26,14 @@ pub struct WeatherEvent {
 	pub temperature: Temperature,
 	pub humidity: Humidity,
 	pub pressure: Pressure
+}
+
+impl Drop for WeatherSensor {
+	fn drop(&mut self) {
+		if let Some(thread) = self.thread.take() {
+			thread.join().unwrap();
+		}
+	}
 }
 
 fn main(mut device: Bme280Device, channel: Sender<Event>, period: Duration) {
@@ -58,6 +66,8 @@ impl WeatherSensor {
 		let device = Bme280Device::new(&settings.device, settings.address)?;
 		let period = Duration::from_secs(settings.update);
 		let thread = spawn(move || { main(device, channel, period) });
-		Ok(WeatherSensor { thread })
+		Ok(WeatherSensor { 
+			thread: Some(thread)
+		})
 	}
 }

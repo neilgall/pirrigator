@@ -2,6 +2,7 @@ extern crate rustpi_io;
 
 use rustpi_io::gpio::*;
 
+use crate::database::Database;
 use std::error::Error;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
@@ -23,13 +24,14 @@ impl Valve {
 }
 
 pub struct Valves {
+	database: Database,
 	units: Vec<Valve>,
 	active: Option<usize>
 }
 
 
 impl Valves {
-	pub fn new(settings: &Vec<ValveSettings>) -> Result<Self, Box<Error>> {
+	pub fn new(settings: &Vec<ValveSettings>, database: Database) -> Result<Self, Box<Error>> {
 		let units: Vec<Valve> = settings.iter()
 			.map(|v| Valve::new(v).unwrap())
 			.collect();
@@ -37,6 +39,7 @@ impl Valves {
 		info!("Initialised {} valve(s)", units.len());
 
 		Ok(Valves { 
+			database,
 			units,
 			active: None
 		})
