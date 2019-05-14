@@ -30,7 +30,7 @@ fn update(msg: Message, model: &mut Pirrigator) -> Update<Message> {
 fn view(model: &Pirrigator) -> El<Message> {
     div![
         h1!["Pirrigator"],
-        img![attrs!{ "src" => "/camera/640/480"}],
+        img![attrs!{ "src" => "/camera/640/480" }],
         model.weather.render().map_message(Message::Weather),
         model.sensors.render().map_message(Message::Sensors)
     ]
