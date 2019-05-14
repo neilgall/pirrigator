@@ -26,17 +26,15 @@ impl Controller {
 			self.database.store_event(&event)
 				.expect("database store error");
 
-			match event {
-				Event::ButtonEvent(b) => self.button_event(&b),
-				_ => {}
+			if let Event::ButtonEvent(b) = event {
+				self.button_event(&b);
 			}
 		}
 	}
 
 	fn button_event(&mut self, b: &ButtonEvent) {
-		match b.transition {
-			Transition::Released => self.valves.toggle().unwrap(),
-			_ => {}
+		if let Transition::Released = b.transition {
+			self.valves.cycle_units().unwrap();
 		}
 	}
 }

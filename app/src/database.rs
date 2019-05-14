@@ -54,6 +54,14 @@ impl Database {
 			)",
 			NO_PARAMS)?;
 
+		conn.execute(
+			"CREATE TABLE IF NOT EXISTS irrigation (
+				valve TEXT,
+				start DATETIME,
+				end DATETIME
+			)",
+			NO_PARAMS)?;
+
 		info!("Opened database at {}", path.to_str().unwrap());
 		Ok(Database { 
 			pool
@@ -91,6 +99,14 @@ impl Database {
 		self.conn().execute(
 			"INSERT INTO moisture (time, sensor, value) VALUES (?1, ?2, ?3)",
 			&[&to_seconds(&event.timestamp) as &ToSql, &event.name, &event.value]
+		)?;
+		Ok(())
+	}
+
+	pub fn store_irrigation(&self, valve: &str, start: SystemTime, end: SystemTime) -> Result<(), Error> {
+		self.conn().execute(
+			"INSERT INTO irrigation (valve, start, end) VALUES (?1, ?2, ?3)",
+			&[&valve.to_string(), &to_seconds(&start) as &ToSql, &to_seconds(&end) as &ToSql]
 		)?;
 		Ok(())
 	}

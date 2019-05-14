@@ -4,6 +4,7 @@ use rustpi_io::gpio::*;
 
 use crate::database::Database;
 use std::error::Error;
+use std::time::SystemTime;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct ValveSettings {
@@ -11,24 +12,66 @@ pub struct ValveSettings {
 	pub gpio: u8
 }
 
-struct Valve {
-	name: String,
-	gpio: GPIO
+enum ValveState {
+	Closed,
+	Open(SystemTime)
 }
 
-impl Valve {
-	fn new(s: &ValveSettings) -> Result<Self, Box<Error>> {
-		let gpio = GPIO::new(s.gpio, GPIOMode::Write)?;
-		Ok(Valve { name: s.name.clone(), gpio })
-	}
+struct Valve {
+	name: String,
+	gpio: GPIO,
+	state: ValveState
 }
 
 pub struct Valves {
 	database: Database,
 	units: Vec<Valve>,
-	active: Option<usize>
 }
 
+impl Valve {
+	fn new(s: &ValveSettings) -> Result<Self, Box<Error>> {
+		let gpio = GPIO::new(s.gpio, GPIOMode::Write)?;
+		Ok(Valve { 
+			name: s.name.clone(),
+			gpio,
+			state: ValveState::Closed
+		})
+	}
+
+	fn open(&mut self) -> Result<(), Box<Error>> {
+		match self.state {
+			ValveState::Open(_) => {
+				// already open
+			}
+			ValveState::Closed => {
+				self.gpio.set(GPIOData::High)?;
+				self.state = ValveState::Open(SystemTime::now());
+			}
+		}
+		Ok(())
+	}
+
+	fn close(&mut self, database: &Database) -> Result<(), Box<Error>> {
+		match self.state {
+			ValveState::Closed => {
+				// already closed
+			}
+			ValveState::Open(opened) => {
+				self.gpio.set(GPIOData::Low)?;
+				self.state = ValveState::Closed;
+				database.store_irrigation(&self.name, opened, SystemTime::now())?;
+			}
+		}
+		Ok(())
+	}
+
+	fn is_open(&self) -> bool {
+		match self.state {
+			ValveState::Open(_) => true,
+			ValveState::Closed => false
+		}
+	}
+}
 
 impl Valves {
 	pub fn new(settings: &Vec<ValveSettings>, database: Database) -> Result<Self, Box<Error>> {
@@ -40,31 +83,30 @@ impl Valves {
 
 		Ok(Valves { 
 			database,
-			units,
-			active: None
+			units
 		})
 	}
 
-	pub fn toggle(&mut self) -> Result<(), Box<Error>> {
-		let on = match self.active {
-			None => 
-				Some(0),
-			Some(a) => {
-				self.units[a].gpio.set(GPIOData::Low)?;
-				if a + 1 < self.units.len() {
-					Some(a + 1)
+	pub fn cycle_units(&mut self) -> Result<(), Box<Error>> {
+		let open = self.units.iter().position(Valve::is_open);
+
+		// Pick the next unit to open, turning off any that is already open
+		let next = match open {
+			None => Some(0),
+			Some(i) => {
+				self.units[i].close(&self.database)?;
+				if i + 1 < self.units.len() {
+					Some(i + 1)
 				} else {
 					None
 				}
 			}
 		};
 
-		match on {
-			None => {},
-			Some(a) => { self.units[a].gpio.set(GPIOData::High)?; }
+		if let Some(i) = next {
+			self.units[i].open()?;
 		}
-		
-		self.active = on;
+
 		Ok(())
 	}
 }
