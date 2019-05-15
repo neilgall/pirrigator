@@ -87,7 +87,7 @@ impl Model {
             Message::FetchNames => {
                 *self = Model::Loading;
                 Update::with_future_msg(self.fetch_names()).skip()
-            }
+            }   
             Message::FetchedNames(names) => {
                 let sensors = HashMap::from_iter(names.iter().map(|name| (name.to_string(), vec![])));
                 *self = Model::Loaded(sensors);
