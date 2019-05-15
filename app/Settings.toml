@@ -1,6 +1,0 @@
-moisture = []
-buttons = []
-valves = []
-
-database.path = "db.sqlite"
-

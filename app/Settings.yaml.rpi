@@ -1,0 +1,43 @@
+database:
+  path: db.sqlite
+
+weather:
+  device: "/dev/i2c-1"
+  address: 0x76
+  update: 300
+
+adc:
+  device: "CE0"
+  device_type: "MCP3008"
+  enable_gpio: 22
+  update: 300
+
+moisture:
+  - name: Left
+    channel: 0
+    min_reading: 470
+    max_reading: 1023
+
+  - name: "Centre"
+    channel: 1
+    min_reading: 280
+    max_reading: 1023
+
+  - name: "Right"
+    channel: 2
+    min_reading: 390
+    max_reading: 1023
+
+valves:
+  - name: "Right"
+    gpio: 25
+
+  - name: "Centre"
+    gpio: 27
+
+  - name: "Left"
+    gpio: 17
+
+buttons:
+  - name: "Top"
+    gpio: 23

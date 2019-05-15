@@ -1,7 +1,7 @@
 extern crate config;
 extern crate serde;
 
-use config::{Config, ConfigError, Environment, File};
+use config::{Config, ConfigError, File, FileFormat};
 
 use crate::button::{ButtonSettings};
 use crate::weather::WeatherSensorSettings;
@@ -25,11 +25,8 @@ pub struct Settings {
 
 impl Settings {
 	pub fn new() -> Result<Self, ConfigError> {
-		let mut s = Config::new();
-
-		s.merge(File::with_name("Settings"))?;
-		s.merge(Environment::with_prefix("PIRRIGATOR"))?;
-
-		s.try_into()
+		let mut config = Config::new();
+		config.merge(File::new("Settings", FileFormat::Yaml))?;
+		config.try_into()
 	}
 }
