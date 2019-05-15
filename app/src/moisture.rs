@@ -23,6 +23,7 @@ pub struct ADCSettings {
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct MoistureSensorSettings {
 	pub name: String,
+	pub socket: String,
 	pub channel: u8,
 	pub min_reading: Measurement,
 	pub max_reading: Measurement
