@@ -3,6 +3,10 @@ CP = scp
 
 all: app
 
+test:
+	(cd app && cargo test)
+	(cd ui && cargo test)
+
 ui-release:
 	(cd ui && \
 		cargo build --target wasm32-unknown-unknown && \
