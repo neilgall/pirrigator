@@ -39,6 +39,18 @@ fn moisture_history(req: &mut Request) -> IronResult<Response> {
 	json(req.get_database().get_moisture_history(&sensor, time_period))
 }
 
+fn irrigation_history(req: &mut Request) -> IronResult<Response> {
+	let valve: String = get_param(req, "valve")?;
+	let time_period = get_time_period(req)?;
+	json(req.get_database().get_irrigation_history(&valve, time_period))
+}
+
+fn moisture_range_since_irrigation(req: &mut Request) -> IronResult<Response> {
+	let sensor: String = get_param(req, "sensor")?;
+	let valve: String = get_param(req, "valve")?;
+	json(req.get_database().get_moisture_range_since_last_irrigation(&sensor, &valve))
+}
+
 pub fn api() -> Router {
 	let mut router = Router::new();
 	router.get("/status", status, "status");
@@ -46,5 +58,7 @@ pub fn api() -> Router {
 	router.get("/weather/:start/:end", weather_history, "weather history");
 	router.get("/moisture/sensors", moisture_sensors, "moisture sensors");
 	router.get("/moisture/:sensor/:start/:end", moisture_history, "moisture history");
+	router.get("/moisture/range/:sensor/:valve", moisture_range_since_irrigation, "mean moisture");
+	router.get("/irrigation/:valve/:start/:end", irrigation_history, "irrigation history");
 	router	
 }

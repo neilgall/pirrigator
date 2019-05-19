@@ -49,18 +49,28 @@ buttons:
     gpio: 23
 
 controller:
-    irrigate_seconds: 60
+  irrigate_seconds: 60
+  location:
+	  latitude: 55.9
+	  longitude: 3.297
+  zones:
+	- name: Tomatoes
+      valve: Tomatoes
+      sensors:
+        - Cherry Tomatoes
+        - Alicante Tomatoes
+      target: 75
+      check:
+        - start: sunrise
+          every: 30
+          duration: 120
 
-zones:
-  - name: Tomatoes
-    valve: Tomatoes
-    sensors:
-      - Tomatoes-1
-      - Tomatoes-2
-    target: 75
-
-  - name: Courgettes
-    valve: Courgettes
-    sensors:
-      - Cucumbers
-    target: 75
+    - name: Courgettes
+      valve: Courgettes
+      sensors:
+        - Courgettes
+      target: 75
+      check:
+        - start: sunrise
+          every: 30
+          duration: 120

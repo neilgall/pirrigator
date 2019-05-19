@@ -1,3 +1,6 @@
+mod scheduler;
+mod settings;
+
 use std::sync::mpsc;
 use std::time::Duration;
 
@@ -8,13 +11,12 @@ use crate::moisture::MoistureSensor;
 use crate::valve::Valves;
 use crate::weather::WeatherSensor;
 
-#[derive(Debug, Deserialize, PartialEq, Eq)]
-pub struct ControllerSettings {
-	pub irrigate_seconds: u64
-}
+pub use scheduler::Scheduler;
+pub use settings::ControllerSettings;
 
 pub struct Controller {
 	pub settings: ControllerSettings,
+	pub scheduler: Scheduler,
 	pub database: Database,
 	pub weather: Option<WeatherSensor>,
 	pub moisture: Option<MoistureSensor>,
@@ -33,16 +35,28 @@ impl Controller {
 			self.database.store_event(&event)
 				.expect("database store error");
 
-			if let Event::ButtonEvent(b) = event {
-				self.button_event(&b);
+			match event {
+				Event::ButtonEvent(b) => self.button_event(&b),
+				Event::ScheduleEvent(name) => self.scheduled_event(&name),
+				_ => {}
 			}
 		}
 	}
 
+	fn irrigate_duration(&self) -> Duration {
+		Duration::from_secs(self.settings.irrigate_seconds)
+	}
+
 	fn button_event(&mut self, b: &ButtonEvent) {
 		if let Transition::Released = b.transition {
-			let duration = Duration::from_secs(self.settings.irrigate_seconds);
-			self.valves.irrigate_all(duration);
+			self.valves.irrigate_all(self.irrigate_duration());
+		}
+	}
+
+	fn scheduled_event(&mut self, name: &str) {
+		match self.settings.zones.iter().find(|z| z.name == name) {
+			Some(zone) => self.valves.irrigate(&zone.valve, self.irrigate_duration()),
+			None => warn!("unknown zone for scheduled event: {}", name)
 		}
 	}
 }

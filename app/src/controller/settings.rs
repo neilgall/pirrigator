@@ -1,0 +1,42 @@
+use crate::moisture::Measurement;
+
+
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+pub struct Check {
+	pub start: String,
+	pub every: String,
+	pub duration: String
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+pub struct Zone {
+	pub name: String,
+	pub valve: String,
+	pub sensors: Vec<String>,
+	pub target: Measurement,
+	pub check: Vec<Check>
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct Location {
+	pub latitude: f64,
+	pub longitude: f64
+}
+
+impl PartialEq for Location {
+	fn eq(&self, other: &Location) -> bool {
+		(self.latitude - other.latitude).abs() < std::f64::EPSILON &&
+		(self.longitude - other.longitude).abs() < std::f64::EPSILON
+	}
+}
+
+impl Eq for Location {}
+
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+pub struct ControllerSettings {
+	pub irrigate_seconds: u64,
+	pub location: Location,
+	pub zones: Vec<Zone>
+}
+
+

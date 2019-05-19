@@ -4,7 +4,7 @@ use std::sync::mpsc;
 use std::thread::{JoinHandle, spawn};
 
 use crate::button::Buttons;
-use crate::controller::Controller;
+use crate::controller::{Controller, Scheduler};
 use crate::database::Database;
 use crate::moisture::MoistureSensor;
 use crate::server;
@@ -43,10 +43,14 @@ impl Pirrigator {
 		let moisture = traverse(&s.adc, &|adc| MoistureSensor::new(&adc, &s.moisture, tx.clone()))?;
 
 		let buttons = Buttons::new(&s.buttons, tx.clone())?;
+		
 		let valves = Valves::new(&s.valves, db.clone())?;
+
+		let scheduler = Scheduler::new(&s.controller.location, &s.controller.zones, tx.clone())?;
 
 		let mut controller = Controller {
 			settings: s.controller,
+			scheduler,
 			database: db.clone(),
 			weather,
 			moisture,
