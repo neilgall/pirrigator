@@ -168,7 +168,7 @@ impl Database {
 	pub fn get_irrigation_history(&self, valve: &str, period: TimePeriod) -> Result<TimeSeries<Duration>, Error> {
 		let conn = self.conn();
 		let mut stmt = conn.prepare(
-			"SELECT start, end FROM irrigation WHERE valve = ?1 AND ?2 <= start AND end < ?3 ORDER BY time ASC"
+			"SELECT start, end FROM irrigation WHERE valve = ?1 AND ?2 <= start AND end < ?3 ORDER BY start ASC"
 		)?;
 		let iter = stmt.query_map(params![&valve, period.start_seconds(), period.end_seconds()], |row| {
 			let start: UnixTime = row.get(0)?;
