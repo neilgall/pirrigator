@@ -1,4 +1,5 @@
 use std::sync::mpsc;
+use std::time::Duration;
 
 use crate::button::{Buttons, ButtonEvent, Transition};
 use crate::database::Database;
@@ -7,7 +8,13 @@ use crate::moisture::MoistureSensor;
 use crate::valve::Valves;
 use crate::weather::WeatherSensor;
 
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+pub struct ControllerSettings {
+	pub irrigate_seconds: u64
+}
+
 pub struct Controller {
+	pub settings: ControllerSettings,
 	pub database: Database,
 	pub weather: Option<WeatherSensor>,
 	pub moisture: Option<MoistureSensor>,
@@ -34,7 +41,8 @@ impl Controller {
 
 	fn button_event(&mut self, b: &ButtonEvent) {
 		if let Transition::Released = b.transition {
-			self.valves.cycle_units().unwrap();
+			let duration = Duration::from_secs(self.settings.irrigate_seconds);
+			self.valves.irrigate_all(duration);
 		}
 	}
 }

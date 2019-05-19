@@ -13,40 +13,43 @@ adc:
   update: 300
 
 moisture:
-  - name: Tomatoes-1
-    socket: Left
-    channel: 0
-    min_reading: 470
+  - name: Cherry Tomatoes
+    socket: Bottom
+    channel: 2
+    min_reading: 0
     max_reading: 1023
 
-  - name: Tomatoes-2
+  - name: Alicante Tomatoes
     socket: Centre
     channel: 1
-    min_reading: 280
+    min_reading: 0
     max_reading: 1023
 
-  - name: Cucumbers
-    socket: Right
-    channel: 2
-    min_reading: 390
+  - name: Courgettes
+    socket: Top
+    channel: 0
+    min_reading: 0
     max_reading: 1023
 
 valves:
   - name: Unused
-    socket: Right
+    socket: Top
     gpio: 25
 
-  - name: Cucumbers
+  - name: Courgettes
     socket: Centre
     gpio: 27
 
   - name: Tomatoes
-    socket: Left
+    socket: Bottom
     gpio: 17
 
 buttons:
   - name: "Top"
     gpio: 23
+
+controller:
+    irrigate_seconds: 60
 
 zones:
   - name: Tomatoes
@@ -56,8 +59,8 @@ zones:
       - Tomatoes-2
     target: 75
 
-  - name: Cucumbers
-    valve: Cucumbers
+  - name: Courgettes
+    valve: Courgettes
     sensors:
       - Cucumbers
     target: 75

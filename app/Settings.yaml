@@ -5,3 +5,5 @@ valves: []
 database:
   path: "db.sqlite"
   
+controller:
+  irrigate_seconds: 0

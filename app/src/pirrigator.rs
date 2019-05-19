@@ -46,6 +46,7 @@ impl Pirrigator {
 		let valves = Valves::new(&s.valves, db.clone())?;
 
 		let mut controller = Controller {
+			settings: s.controller,
 			database: db.clone(),
 			weather,
 			moisture,
