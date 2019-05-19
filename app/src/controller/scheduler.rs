@@ -74,12 +74,19 @@ struct ScheduledEvent {
 
 impl ScheduledEvent {
 	fn new(name: &str, time: &str, every: &str, duration: &str) -> Result<Self, ParseError> {
-		Ok(ScheduledEvent { 
+		let event = ScheduledEvent { 
 			name: name.to_string(),
 			time: Time::from_str(time)?,
 			every: parse_duration(every)?,
 			duration: parse_duration(duration)?
-		})
+		};
+		if event.every == Duration::zero() {
+			Err(ParseError { msg: "'every' must be greater than zero ".to_string() })
+		} else if event.duration == Duration::zero() {
+			Err(ParseError { msg: "'duration' must be greater than zero".to_string() })
+		} else {
+			Ok(event)
+		}
 	}
 
 	fn times(&self, location: &Location, date: &Date<Utc>) -> Vec<DateTime<Utc>> {
@@ -142,7 +149,9 @@ impl Schedule {
 		let mut events: Vec<Pending> = vec![];
 		for event in &self.events {
 			let times = event.times(&self.location, &now.date());
-			times.iter().for_each(|t| events.push(Pending { name: &event.name, time: *t }) );
+			times.iter()
+				.filter(|t| *t > &now)
+				.for_each(|t| events.push(Pending { name: &event.name, time: *t }) );
 		}
 		events.sort_by(|x, y| x.time.cmp(&y.time) );
 		events
@@ -150,12 +159,18 @@ impl Schedule {
 
 	fn main(&self, tx: Sender<Event>) {
 		loop {
-			for event in self.all_pending(Utc::now()) {
-				while Utc::now() < event.time {
-					sleep(std::time::Duration::from_secs(1));
+			let events = self.all_pending(Utc::now());
+			if events.is_empty() {
+				sleep(std::time::Duration::from_secs(600));
+			} else {
+				debug!("scheduled {:?}", events);
+				for event in events {
+					while Utc::now() < event.time {
+						sleep(std::time::Duration::from_secs(1));
+					}
+					tx.send(Event::ScheduleEvent(event.name.to_string()))
+						.expect("scheduler send error");
 				}
-				tx.send(Event::ScheduleEvent(event.name.to_string()))
-					.expect("scheduler send error");
 			}
 		}
 	}
@@ -194,6 +209,7 @@ mod test {
 		assert_eq!(Time::Sunset, Time::from_str("SunSet").unwrap());
 		assert_eq!(Time::Sunset, Time::from_str("sunset").unwrap());
 		assert_eq!(Time::Fixed { hour: 6, minute: 19 }, Time::from_str("06:19").unwrap());
+		assert!(Time::from_str("foo").is_err());
 	}
 
 	#[test]
@@ -227,6 +243,23 @@ mod test {
 	}
 
 	#[test]
+	fn repeat_and_duration_cannot_be_zero() {
+		assert!(ScheduledEvent::new("test", "06:00", "30", "0").is_err());
+		assert!(ScheduledEvent::new("test", "06:00", "0", "30").is_err());
+		assert!(ScheduledEvent::new("test", "06:00", "0", "0").is_err());
+	}
+
+	#[test]
+	fn times_for_non_repeating_event() {
+		let location = Location { longitude: 0.0, latitude: 0.0 };
+		let date = Utc.ymd(2019, 5, 19);
+		assert_eq!(
+			vec![date.and_hms(6, 0, 0)],
+			ScheduledEvent::new("test", "06:00", "1", "1").unwrap().times(&location, &date)
+		);
+	}
+
+	#[test]
 	fn schedule_merges_events() {
 		let location = Location { longitude: 3.297, latitude: 55.9 };
 		let date = Utc.ymd(2019, 5, 19);
@@ -248,4 +281,22 @@ mod test {
 			schedule.all_pending(date.and_hms(0, 0, 0))
 		)
 	}
+
+	#[test]
+	fn schedule_filters_past_events() {
+		let location = Location { longitude: 3.297, latitude: 55.9 };
+		let date = Utc.ymd(2019, 5, 19);
+		let events = vec![
+			ScheduledEvent::new("foo", "08:00", "30", "65").unwrap(),
+			ScheduledEvent::new("bar", "08:12", "20", "65").unwrap()
+		];
+		let schedule = Schedule::new(&events, &location);
+		assert_eq!(
+			vec![
+				Pending::new("bar", date.and_hms(9, 12, 0))
+			],
+			schedule.all_pending(date.and_hms(9, 1, 0))
+		)
+	}
+
 }
