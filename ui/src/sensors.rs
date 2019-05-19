@@ -1,3 +1,5 @@
+extern crate urlencoding;
+
 use futures::Future;
 use seed::prelude::*;
 use seed::{Method, Request};
@@ -118,7 +120,7 @@ impl Model {
     }
 
     pub fn fetch_data(&mut self, name: String, duration: u32) -> impl Future<Item = Message, Error = Message> {
-        let url = format!("/api/moisture/{}/{}/0", name, duration);
+        let url = format!("/api/moisture/{}/{}/0", urlencoding::encode(&name), duration);
         Request::new(&url)
             .method(Method::Get)
             .fetch_json()
