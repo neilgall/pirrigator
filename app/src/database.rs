@@ -5,6 +5,7 @@ extern crate rusqlite;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Error, params, NO_PARAMS};
 use rusqlite::types::ToSql;
+use std::ops::Range;
 use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use crate::event::Event;
@@ -29,6 +30,11 @@ fn to_seconds(t: &SystemTime) -> UnixTime {
 
 fn to_system_time(s: UnixTime) -> SystemTime {
 	UNIX_EPOCH + Duration::from_secs(s as u64)
+}
+
+impl TimePeriod {
+	fn start_seconds(&self) -> UnixTime { to_seconds(&self.start) }
+	fn end_seconds(&self) -> UnixTime { to_seconds(&self.end) }
 }
 
 impl Database {
@@ -128,9 +134,9 @@ impl Database {
 	pub fn get_weather_history(&self, period: TimePeriod) -> Result<Vec<weather::WeatherEvent>, Error> {
 		let conn = self.conn();
 		let mut stmt = conn.prepare(
-			&format!("SELECT time, temperature, humidity, pressure from weather WHERE ? <= time AND time < ? ORDER BY time ASC")
+			&format!("SELECT time, temperature, humidity, pressure FROM weather WHERE ?1 <= time AND time < ?2 ORDER BY time ASC")
 		)?;
-		let iter = stmt.query_map(params![to_seconds(&period.start), to_seconds(&period.end)], |row| {
+		let iter = stmt.query_map(params![period.start_seconds(), period.end_seconds()], |row| {
 			Ok( weather::WeatherEvent { 
 				timestamp: to_system_time(row.get(0)?),
 				temperature: row.get(1)?,
@@ -151,11 +157,39 @@ impl Database {
 	pub fn get_moisture_history(&self, sensor: &str, period: TimePeriod) -> Result<TimeSeries<moisture::Measurement>, Error> {
 		let conn = self.conn();
 		let mut stmt = conn.prepare(
-			"SELECT time, value from moisture WHERE sensor == ? AND ? <= time AND time < ? ORDER BY time ASC"
+			"SELECT time, value FROM moisture WHERE sensor == ?1 AND ?2 <= time AND time < ?3 ORDER BY time ASC"
 		)?;
-		let iter = stmt.query_map(params![&sensor, to_seconds(&period.start), to_seconds(&period.end)], |row| {
+		let iter = stmt.query_map(params![&sensor, period.start_seconds(), period.end_seconds()], |row| {
 			Ok( (to_system_time(row.get(0)?), row.get(1)?) )
 		})?;
 		iter.collect()
+	}
+
+	pub fn get_irrigation_history(&self, valve: &str, period: TimePeriod) -> Result<TimeSeries<Duration>, Error> {
+		let conn = self.conn();
+		let mut stmt = conn.prepare(
+			"SELECT start, end FROM irrigation WHERE valve = ?1 AND ?2 <= start AND end < ?3 ORDER BY time ASC"
+		)?;
+		let iter = stmt.query_map(params![&valve, period.start_seconds(), period.end_seconds()], |row| {
+			let start: UnixTime = row.get(0)?;
+			let end: UnixTime = row.get(1)?;
+			Ok( (to_system_time(start), Duration::from_secs((end - start) as u64)) )
+		})?;
+		iter.collect()
+	}
+
+	pub fn get_moisture_range_since_last_irrigation(&self, sensor: &str, valve: &str) -> Result<Range<moisture::Measurement>, Error> {
+		let conn = self.conn();
+		let mut stmt = conn.prepare(
+			"SELECT MIN(value), MAX(value) FROM moisture JOIN irrigation 
+				WHERE moisture.sensor = ?1 
+				  AND irrigation.valve = ?2
+				  AND moisture.time > irrigation.end",
+		)?;
+		stmt.query_row(params![&sensor, &valve], |row| {
+			let min: moisture::Measurement = row.get(0)?;
+			let max: moisture::Measurement = row.get(1)?;
+			Ok(min..max)
+		})
 	}
 }
