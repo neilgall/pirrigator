@@ -8,6 +8,8 @@ use std::sync::mpsc;
 use std::thread::{JoinHandle, sleep, spawn};
 use std::time::{Duration, SystemTime};
 
+const SECONDS_BETWEEN_EVENTS: u64 = 5;
+
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct ValveSettings {
 	pub name: String,
@@ -73,6 +75,7 @@ impl Valve {
 		sleep(duration);
 		self.close()?;
 		database.store_irrigation(&self.name, opened, SystemTime::now())?;
+		sleep(Duration::from_secs(SECONDS_BETWEEN_EVENTS));
 		Ok(())
 	}
 }
@@ -90,7 +93,6 @@ fn main(rx: mpsc::Receiver<Command>, mut valves: Vec<Valve>, database: Database)
 			Command::IrrigateAll { duration } => {
 				for valve in &mut valves {
 					valve.irrigate_event(duration, &database).unwrap();
-					sleep(Duration::from_secs(5));
 				}
 			},
 			Command::Irrigate { name, duration } => {
