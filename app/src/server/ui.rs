@@ -24,7 +24,7 @@ fn index_html(_: &mut Request) -> IronResult<Response> {
 	respond(*INDEX, content_type)
 }
 
-fn draco_starter_js(_: &mut Request) -> IronResult<Response> {
+fn javascript(_: &mut Request) -> IronResult<Response> {
 	let content_type = Mime(
 		TopLevel::Application,
 		SubLevel::Javascript,
@@ -33,7 +33,7 @@ fn draco_starter_js(_: &mut Request) -> IronResult<Response> {
 	respond(*START_JS, content_type)
 }
 
-fn draco_starter_wasm(_: &mut Request) -> IronResult<Response> {
+fn wasm(_: &mut Request) -> IronResult<Response> {
 	let content_type = Mime(
 		TopLevel::Application,
 		SubLevel::Ext(String::from("wasm")),
@@ -46,7 +46,7 @@ pub fn ui() -> Router {
 	let mut router = Router::new();
 	router.get("/", index_html, "root");
 	router.get("/index.html", index_html, "index.html");
-	router.get("/pirrigator-ui.js", draco_starter_js, "start js");
-	router.get("/pirrigator-ui_bg.wasm", draco_starter_wasm, "wasm blob");
+	router.get("/pirrigator-ui.js", javascript, "start js");
+	router.get("/pirrigator-ui_bg.wasm", wasm, "wasm blob");
 	router			
 }
