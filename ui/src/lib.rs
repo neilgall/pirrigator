@@ -2,7 +2,7 @@
 #[macro_use] extern crate seed;
 
 mod chart;
-mod sensors;
+mod zones;
 mod weather;
 mod utils;
 
@@ -11,19 +11,19 @@ use seed::prelude::*;
 #[derive(Default, Debug)]
 struct Pirrigator {
     weather: weather::Model,
-    sensors: sensors::Model
+    zones: zones::Model
 }
 
 #[derive(Clone)]
 enum Message {
     Weather(weather::Message),
-    Sensors(sensors::Message),
+    Zones(zones::Message),
 }
 
 fn update(msg: Message, model: &mut Pirrigator) -> Update<Message> {
     match msg {
         Message::Weather(msg) => model.weather.update(msg).map(Message::Weather),
-        Message::Sensors(msg) => model.sensors.update(msg).map(Message::Sensors)
+        Message::Zones(msg) => model.zones.update(msg).map(Message::Zones)
     }
 }
 
@@ -32,7 +32,7 @@ fn view(model: &Pirrigator) -> El<Message> {
         h1!["Pirrigator"],
         img![attrs!{ "src" => "/camera/640/480" }],
         model.weather.render().map_message(Message::Weather),
-        model.sensors.render().map_message(Message::Sensors)
+        model.zones.render().map_message(Message::Zones)
     ]
 }
 

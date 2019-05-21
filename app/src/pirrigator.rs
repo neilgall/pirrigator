@@ -21,6 +21,7 @@ fn traverse<T, U, E>(t: &Option<T>, f: &Fn(&T) -> Result<U, E>) -> Result<Option
 }
 
 pub struct Pirrigator {
+	settings: Settings,
 	thread: Option<JoinHandle<()>>,
 	database: Database
 }
@@ -49,7 +50,7 @@ impl Pirrigator {
 		let scheduler = Scheduler::new(&s.controller.location, &s.controller.zones, tx.clone())?;
 
 		let mut controller = Controller {
-			settings: s.controller,
+			settings: s.controller.clone(),
 			scheduler,
 			database: db.clone(),
 			weather,
@@ -61,12 +62,13 @@ impl Pirrigator {
 		let thread = spawn(move || controller.run(rx));
 
 		return Ok(Pirrigator { 
+			settings: s,
 			thread: Some(thread),
 			database: db
 		})
 	}
 
 	pub fn run_server(&self) {
-		server::run(self.database.clone());
+		server::run(self.database.clone(), &self.settings.controller.zones);
 	}
 }

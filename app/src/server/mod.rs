@@ -15,6 +15,7 @@ use iron::prelude::*;
 use mount::Mount;
 use router::Router;
 use std::str::FromStr;
+use crate::controller::Zone;
 
 fn urldecode(s: &str) -> IronResult<String> {
 	urlencoding::decode(s)
@@ -34,9 +35,9 @@ pub fn get_param<T: FromStr>(req: &Request, name: &str) -> IronResult<T> {
 		.and_then(parse)
 }
 
-pub fn run(database: Database) {
+pub fn run(database: Database, zones: &Vec<Zone>) {
 	let mut mount = Mount::new();
-	mount.mount("/api", api::api());
+	mount.mount("/api", api::api(zones));
 	mount.mount("/camera", camera::api());
 	mount.mount("/", ui::ui());
 

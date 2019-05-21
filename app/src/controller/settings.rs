@@ -1,14 +1,14 @@
 use crate::moisture::Measurement;
 
 
-#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Check {
 	pub start: String,
 	pub every: String,
 	pub duration: String
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Zone {
 	pub name: String,
 	pub valve: String,
@@ -32,7 +32,7 @@ impl PartialEq for Location {
 
 impl Eq for Location {}
 
-#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct ControllerSettings {
 	pub irrigate_seconds: u64,
 	pub location: Location,

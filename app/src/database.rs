@@ -131,7 +131,7 @@ impl Database {
 		})
 	}
 
-	pub fn get_weather_history(&self, period: TimePeriod) -> Result<Vec<weather::WeatherEvent>, Error> {
+	pub fn get_weather_history(&self, period: &TimePeriod) -> Result<Vec<weather::WeatherEvent>, Error> {
 		let conn = self.conn();
 		let mut stmt = conn.prepare(
 			&format!("SELECT time, temperature, humidity, pressure FROM weather WHERE ?1 <= time AND time < ?2 ORDER BY time ASC")
@@ -154,7 +154,7 @@ impl Database {
 		iter.collect()
 	}
 
-	pub fn get_moisture_history(&self, sensor: &str, period: TimePeriod) -> Result<TimeSeries<moisture::Measurement>, Error> {
+	pub fn get_moisture_history(&self, sensor: &str, period: &TimePeriod) -> Result<TimeSeries<moisture::Measurement>, Error> {
 		let conn = self.conn();
 		let mut stmt = conn.prepare(
 			"SELECT time, value FROM moisture WHERE sensor == ?1 AND ?2 <= time AND time < ?3 ORDER BY time ASC"
@@ -165,7 +165,7 @@ impl Database {
 		iter.collect()
 	}
 
-	pub fn get_irrigation_history(&self, valve: &str, period: TimePeriod) -> Result<TimeSeries<Duration>, Error> {
+	pub fn get_irrigation_history(&self, valve: &str, period: &TimePeriod) -> Result<TimeSeries<Duration>, Error> {
 		let conn = self.conn();
 		let mut stmt = conn.prepare(
 			"SELECT start, end FROM irrigation WHERE valve = ?1 AND ?2 <= start AND end < ?3 ORDER BY start ASC"

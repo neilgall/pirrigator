@@ -8,18 +8,17 @@ use serde::ser::Serialize;
 use std::error::Error;
 use super::error::bad_request;
 
-pub fn json<T: Serialize, E: Error>(result: Result<T, E>) -> IronResult<Response> {
+pub fn json<T: Serialize>(data: &T) -> IronResult<Response> {
 	let mut response = Response::new();
-	match result {
-		Ok(data) => {
-			response.set_mut(JsonResponse::json(data))
-					.set_mut(status::Ok);
-			response.headers.set(ContentType::json());
+	response.set_mut(JsonResponse::json(data))
+			.set_mut(status::Ok);
+	response.headers.set(ContentType::json());
+	Ok(response)	
+}
 
-			Ok(response)
-		}
-		Err(e) => {
-			Err(bad_request(e.description()))
-		}
+pub fn json_or_err<T: Serialize, E: Error>(result: Result<T, E>) -> IronResult<Response> {
+	match result  {
+		Ok(ref data) => json(data),
+		Err(e) => Err(bad_request(e.description()))
 	}
 }

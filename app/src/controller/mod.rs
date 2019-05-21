@@ -12,7 +12,7 @@ use crate::valve::Valves;
 use crate::weather::WeatherSensor;
 
 pub use scheduler::Scheduler;
-pub use settings::ControllerSettings;
+pub use settings::{ControllerSettings, Zone};
 
 pub struct Controller {
 	pub settings: ControllerSettings,
