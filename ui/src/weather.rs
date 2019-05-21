@@ -64,12 +64,9 @@ impl Model {
                     p![e],
                 Model::Loaded(data) =>
                     div![
-                        h3!["Temperature"],
                         chart(data, "Temperature", Some(0.0), &|r| r.temperature).render().map_message(|_| Message::Fetch(HOUR)),
-                        h3!["Humidity"],
                         chart(data, "Humidity", Some(0.0), &|r| r.humidity).render().map_message(|_| Message::Fetch(HOUR)),
-                        h3!["Barometric Pressure"],
-                        chart(data, "Pressure", None, &|r| r.pressure).render().map_message(|_| Message::Fetch(HOUR))
+                        chart(data, "Barometric Pressure", None, &|r| r.pressure).render().map_message(|_| Message::Fetch(HOUR))
                     ]
             }
         ]

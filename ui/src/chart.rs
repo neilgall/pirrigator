@@ -79,7 +79,9 @@ impl<'a> Stroke<'a> {
 	}
 }
 
-const LEFT_MARGIN: W = 40;
+const LEFT_MARGIN: W = 50;
+const RIGHT_MARGIN: W = 25;
+const TOP_MARGIN: H = 25;
 const BOTTOM_MARGIN: H = 50;
 const MARK_GAP_Y: H = 30;
 const MARK_GAP_X: W = 100;
@@ -87,6 +89,7 @@ const MARK_WIDTH: W = 5;
 const MARK_HEIGHT: H = 5;
 const LABEL_GAP_Y: H = 15;
 const LABEL_GAP_X: W = 5;
+const KEY_LABEL_WIDTH: W = 180;
 
 type Fragment = Vec<El<Message>>;
 
@@ -112,7 +115,7 @@ impl Chart {
 	fn value_range(&self) -> (f64, f64) {
 		let min = self.y_min.unwrap_or(self.data.iter().map(|s| s.min_value()).min_value());
 		let max = self.y_max.unwrap_or(self.data.iter().map(|s| s.max_value()).max_value());
-		(min, max)
+		(min, max * 1.1)
 	}
 
 	fn time_range(&self) -> (DateTime<Utc>, DateTime<Utc>) {
@@ -122,7 +125,7 @@ impl Chart {
 	}
 
 	fn top_left(&self) -> Point {
-		Point { x: LEFT_MARGIN, y: 0 }
+		Point { x: LEFT_MARGIN, y: TOP_MARGIN }
 	}
 
 	fn bottom_left(&self) -> Point {
@@ -130,7 +133,7 @@ impl Chart {
 	}
 
 	fn bottom_right(&self) -> Point {
-		Point { x: self.width, y: self.height - BOTTOM_MARGIN }
+		Point { x: self.width - RIGHT_MARGIN, y: self.height - BOTTOM_MARGIN }
 	}
 
 	fn axis_stroke(&self) -> Stroke {
@@ -158,11 +161,11 @@ impl Chart {
 		]
 	}
 
-	fn text(&self, t: &str, x: X, y: Y, anchor: &str) -> El<Message> {
+	fn text(&self, t: &str, x: X, y: Y, anchor: &str, colour: &str) -> El<Message> {
 		text![
 			attrs!{ "x" => x },
 			attrs!{ "y" => y },
-			attrs!{ "fill" => "black" },
+			attrs!{ "fill" => colour },
 			attrs!{ "text-anchor" => anchor },
 			attrs!{ "dominant-baseline" => "middle" },
 			t
@@ -185,7 +188,7 @@ impl Chart {
 			draw.push(self.line(top.x-MARK_WIDTH, y, top.x, y, &stk));
 			draw.push(self.line(top.x, y, right.x, y, &gstk));
 			let v = (bot.y - y) as f64 * scale + min;
-			draw.push(self.text(&format!("{:.0}", v), top.x-MARK_WIDTH-LABEL_GAP_X, y, "end"));
+			draw.push(self.text(&format!("{:.0}", v), top.x-MARK_WIDTH-LABEL_GAP_X, y, "end", "black"));
 			y = if y < top.y + MARK_GAP_Y { top.y } else { y - MARK_GAP_Y };
 		}
 		draw
@@ -207,8 +210,8 @@ impl Chart {
 			draw.push(self.line(x, top.y, x, left.y, &gstk));
 			let s = chrono::Duration::seconds(((x - left.x) as f64 * scale) as i64);
 			if let Some(t) = min.checked_add_signed(s) {
-				draw.push(self.text(&t.format("%Y-%m-%d").to_string(), x, left.y+MARK_HEIGHT+LABEL_GAP_Y, "middle"));
-				draw.push(self.text(&t.format("%H:%M:%S").to_string(), x, left.y+MARK_HEIGHT+LABEL_GAP_Y*2, "middle"));
+				draw.push(self.text(&t.format("%H:%M:%S").to_string(), x, left.y+MARK_HEIGHT+LABEL_GAP_Y, "middle", "black"));
+				draw.push(self.text(&t.format("%b %d").to_string(), x, left.y+MARK_HEIGHT+LABEL_GAP_Y*2, "middle", "black"));
 			}
 			x += MARK_GAP_X;
 		}
@@ -236,6 +239,7 @@ impl Chart {
 				}
 				prev = Some(Point { x, y });
 			}
+			draw.push(self.text(&series.label, index as X * KEY_LABEL_WIDTH as X, 10, "hanging", stk.stroke))
 		}
 		draw
 	}
