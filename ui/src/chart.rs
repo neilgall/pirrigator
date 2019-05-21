@@ -10,11 +10,18 @@ pub struct DataPoint {
 }
 
 #[derive(Debug)]
+pub struct Series {
+	pub label: String,
+	pub data: Vec<DataPoint>
+}
+
+#[derive(Debug)]
 pub struct Chart {
 	pub width: u32,
 	pub height: u32,
-	pub y_origin_zero: bool,
-	pub data: Vec<DataPoint>
+	pub y_min: Option<f64>,
+	pub y_max: Option<f64>,
+	pub data: Vec<Series>
 }
 
 impl Default for Chart {
@@ -22,7 +29,8 @@ impl Default for Chart {
 		Chart {
 			width: 600,
 			height: 200,
-			y_origin_zero: true,
+			y_min: None,
+			y_max: None,
 			data: vec![]
 		}
 	}
@@ -30,7 +38,6 @@ impl Default for Chart {
 
 #[derive(Clone, Debug)]
 pub enum Message {
-	Update
 }
 
 type X = u32;
@@ -83,16 +90,35 @@ const LABEL_GAP_X: W = 5;
 
 type Fragment = Vec<El<Message>>;
 
+impl Series {
+	fn min_value(&self) -> f64 {
+		self.data.iter().map(|p| p.value).min_value()
+	}
+
+	fn max_value(&self) -> f64 {
+		self.data.iter().map(|p| p.value).max_value()
+	}
+
+	fn min_time(&self) -> DateTime<Utc> {
+		self.data.iter().map(|p| to_utc(&p.time)).min().unwrap_or(Utc.ymd(2019,1,1).and_hms(0,0,0))
+	}
+
+	fn max_time(&self) -> DateTime<Utc> {
+		self.data.iter().map(|p| to_utc(&p.time)).max().unwrap_or(Utc.ymd(2019,1,1).and_hms(0,0,0))
+	}
+}
+
 impl Chart {
 	fn value_range(&self) -> (f64, f64) {
-		let values = self.data.iter().map(|DataPoint{time: _, value: v}| v);
-		(values.clone().cloned().min_value(), values.cloned().max_value())
+		let min = self.y_min.unwrap_or(self.data.iter().map(|s| s.min_value()).min_value());
+		let max = self.y_max.unwrap_or(self.data.iter().map(|s| s.max_value()).max_value());
+		(min, max)
 	}
 
 	fn time_range(&self) -> (DateTime<Utc>, DateTime<Utc>) {
-		let default = Some(Utc.ymd(2019,1,1).and_hms(0,0,0));
-		let utcs = self.data.iter().map(|DataPoint{time: t, value: _}| to_utc(t));
-		(utcs.clone().min().or(default).unwrap(), utcs.max().or(default).unwrap())
+		let min = self.data.iter().map(|s| s.min_time()).min().unwrap();
+		let max = self.data.iter().map(|s| s.max_time()).max().unwrap();
+		(min, max)
 	}
 
 	fn top_left(&self) -> Point {
@@ -115,8 +141,9 @@ impl Chart {
 		Stroke::new(1, "#cccccc", "square")
 	}
 
-	fn data_stroke(&self) -> Stroke {
-		Stroke::new(1, "red", "square")
+	fn data_stroke(&self, index: usize) -> Stroke {
+		let colours = vec!["red", "green", "blue", "orange", "purple"];
+		Stroke::new(1, colours[index % colours.len()], "square")
 	}
 
 	fn line<'a>(&self, x1: X, y1: Y, x2: X, y2: Y, stroke: &Stroke<'a>) -> El<Message> {
@@ -149,8 +176,7 @@ impl Chart {
 		let right = self.bottom_right();
 		let stk = self.axis_stroke();
 		let gstk = self.grid_stroke();
-		let range = if self.y_origin_zero { max } else { max - min };
-		let origin = if self.y_origin_zero { 0.0 } else { min };
+		let range = max - min;
 		let scale = range / (bot.y - top.y) as f64;
 		let mut draw = Vec::new();
 		draw.push(self.line(top.x, top.y, bot.x, bot.y, &stk));
@@ -158,7 +184,7 @@ impl Chart {
 		while y > top.y {
 			draw.push(self.line(top.x-MARK_WIDTH, y, top.x, y, &stk));
 			draw.push(self.line(top.x, y, right.x, y, &gstk));
-			let v = (bot.y - y) as f64 * scale + origin;
+			let v = (bot.y - y) as f64 * scale + min;
 			draw.push(self.text(&format!("{:.0}", v), top.x-MARK_WIDTH-LABEL_GAP_X, y, "end"));
 			y = if y < top.y + MARK_GAP_Y { top.y } else { y - MARK_GAP_Y };
 		}
@@ -195,20 +221,21 @@ impl Chart {
 		let tl = self.top_left();
 		let bl = self.bottom_left();
 		let br = self.bottom_right();
-		let y_range = if self.y_origin_zero { max_value } else { max_value - min_value };
-		let y_origin = if self.y_origin_zero { 0.0 } else { min_value };
+		let y_range = max_value - min_value;
 		let y_scale = y_range / (bl.y - tl.y) as f64;
 		let x_scale = max_time.signed_duration_since(min_time).num_seconds() as f64 / (br.x - bl.x) as f64;
-		let stk = self.data_stroke();
 		let mut draw = Vec::new();
-		let mut prev: Option<Point> = None;
-		for DataPoint { time, value } in self.data.iter() {
-			let x = bl.x + (to_utc(time).signed_duration_since(min_time).num_seconds() as f64 / x_scale) as X;
-			let y = bl.y - ((value - y_origin) / y_scale) as Y;
-			if let Some(p) = prev {
-				draw.push(self.line(p.x, p.y, x, y, &stk));
+		for (index, series) in self.data.iter().enumerate() {
+			let stk = self.data_stroke(index);
+			let mut prev: Option<Point> = None;
+			for DataPoint { time, value } in series.data.iter() {
+				let x = bl.x + (to_utc(time).signed_duration_since(min_time).num_seconds() as f64 / x_scale) as X;
+				let y = bl.y - ((value - min_value) / y_scale) as Y;
+				if let Some(p) = prev {
+					draw.push(self.line(p.x, p.y, x, y, &stk));
+				}
+				prev = Some(Point { x, y });
 			}
-			prev = Some(Point { x, y });
 		}
 		draw
 	}

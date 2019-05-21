@@ -49,6 +49,18 @@ pub enum Message {
     Failed(JsValue)
 }
 
+impl From<&MoistureRow> for chart::DataPoint {
+    fn from(m: &MoistureRow) -> Self {
+        chart::DataPoint { time: m.timestamp.clone(), value: m.value as f64 }
+    }
+}
+
+impl From<(&String, &Vec<MoistureRow>)> for chart::Series {
+    fn from(s: (&String, &Vec<MoistureRow>)) -> Self {
+        chart::Series { label: s.0.clone(), data: s.1.iter().map(chart::DataPoint::from).collect() }
+    }
+}
+
 impl Zone {
     fn new(name: &str) -> Self {
         Zone {
@@ -64,15 +76,13 @@ impl Zone {
     }
 
     fn render(&self) -> El<Message> {
-        fn chart(data: &Vec<MoistureRow>) -> chart::Chart {
+        fn chart(data: &HashMap<String, Vec<MoistureRow>>) -> chart::Chart {
             chart::Chart {
                 width: 600,
                 height: 200,
-                y_origin_zero: true,
-                data: data.iter().map(|MoistureRow { timestamp: time, value }| chart::DataPoint { 
-                    time: time.clone(), 
-                    value: value.clone() as f64
-                }).collect()
+                y_min: Some(0.0),
+                y_max: None,
+                data: data.iter().map(chart::Series::from).collect()
             }
         }
         div![
@@ -85,13 +95,7 @@ impl Zone {
                 if self.moisture.is_empty() {
                     p!["Select a time range"]
                 } else {
-                    let charts: Vec<El<Message>> = self.moisture.iter().map(|(name,data)| {
-                        div![
-                            h3![name],
-                            chart(data).render().map_message(|_| Message::FetchZones)
-                        ]
-                    }).collect();
-                    div![charts]
+                    chart(&self.moisture).render().map_message(|_| Message::FetchZones)
                 }
             ]
         ]
