@@ -74,6 +74,12 @@ fn moisture_history_for_zone(req: &mut Request) -> IronResult<Response> {
 	json_or_err(data)
 }
 
+fn irrigation_history_for_zone(req: &mut Request) -> IronResult<Response> {
+	let zone = get_zone(req)?;
+	let time_period = get_time_period(req)?;
+	json_or_err(req.get_database().get_irrigation_history(&zone.valve, &time_period))
+}
+
 struct ZonesMiddleware {
 	zones: Arc<HashMap<String, Zone>>
 }
@@ -107,6 +113,7 @@ pub fn api(zones: &Vec<Zone>) -> Chain {
 	router.get("/irrigation/:valve/:start/:end", irrigation_history, "irrigation history");
 	router.get("/zone/list", list_zones, "zones");
 	router.get("/zone/:zone/moisture/:start/:end", moisture_history_for_zone, "moisture for zone");
+	router.get("/zone/:zone/irrigation/:start/:end", irrigation_history_for_zone, "irrigation for zone");
 
 	let zones = HashMap::from_iter(zones.iter().map(|z| (z.name.clone(), z.clone()) ));
 	let mut chain = Chain::new(router);

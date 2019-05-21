@@ -2,7 +2,7 @@
 Description=Automated Irrigation Service
 
 [Service]
-Type=Simple
+Type=simple
 WorkingDirectory=/var/lib/pirrigator
 ExecStart=/usr/local/bin/pirrigator
 ExecStopPost=/usr/local/bin/reset-gpio.sh

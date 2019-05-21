@@ -86,7 +86,7 @@ impl Zone {
             }
         }
         div![
-            h2![self.name],
+            h3![self.name],
             button![simple_ev(Ev::Click, self.fetch_moisture_data_event(HOUR)), "Last Hour"],
             button![simple_ev(Ev::Click, self.fetch_moisture_data_event(DAY)), "Last Day"],
             button![simple_ev(Ev::Click, self.fetch_moisture_data_event(WEEK)), "Last Week"],
