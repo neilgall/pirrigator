@@ -43,7 +43,8 @@ fn chart(data: &Vec<WeatherRow>, label: &str, y_min: Option<f64>, f: &Fn(&Weathe
                 label: label.to_string(),
                 data: data.iter().map(|r| chart::DataPoint { time: r.timestamp, value: f(r) }).collect()
             }
-        ]
+        ],
+        bars: vec![]
     }
 }
 
@@ -76,7 +77,7 @@ impl Model {
         match msg {
             Message::Fetch(t) => {
                 *self = Model::Loading;
-                Update::with_future_msg(self.fetch(t)).skip()
+                Update::with_future_msg(self.fetch(t)).render()
             }
             Message::Fetched(rows) => {
                 *self = if rows.is_empty() { Model::NotLoaded } else { Model::Loaded(rows) };

@@ -61,6 +61,12 @@ impl From<(&String, &Vec<MoistureRow>)> for chart::Series {
     }
 }
 
+impl From<&IrrigationRow> for chart::Bar {
+    fn from(r: &IrrigationRow) -> Self {
+        chart::Bar { time: r.start, duration: r.duration }
+    }
+}
+
 impl Zone {
     fn new(name: &str) -> Self {
         Zone {
@@ -76,15 +82,6 @@ impl Zone {
     }
 
     fn render(&self) -> El<Message> {
-        fn chart(data: &HashMap<String, Vec<MoistureRow>>) -> chart::Chart {
-            chart::Chart {
-                width: 600,
-                height: 200,
-                y_min: Some(0.0),
-                y_max: None,
-                data: data.iter().map(chart::Series::from).collect()
-            }
-        }
         div![
             h3![self.name],
             button![simple_ev(Ev::Click, self.fetch_moisture_data_event(HOUR)), "Last Hour"],
@@ -95,7 +92,15 @@ impl Zone {
                 if self.moisture.is_empty() {
                     p!["Select a time range"]
                 } else {
-                    chart(&self.moisture).render().map_message(|_| Message::FetchZones)
+                    let c = chart::Chart {
+                        width: 600,
+                        height: 200,
+                        y_min: Some(0.0),
+                        y_max: Some(100.0),
+                        data: self.moisture.iter().map(chart::Series::from).collect(),
+                        bars: self.irrigation.iter().map(chart::Bar::from).collect()
+                    };
+                    c.render().map_message(|_| Message::FetchZones)
                 }
             ]
         ]
@@ -133,7 +138,7 @@ impl Model {
         match msg {
             Message::FetchZones => {
                 *self = Model::Loading;
-                Update::with_future_msg(self.fetch_zones()).skip()
+                Update::with_future_msg(self.fetch_zones()).render()
             }   
             Message::FetchedZones(zones) => {
                 *self = Model::Loaded(zones.iter().map(|name| Zone::new(name)).collect());
