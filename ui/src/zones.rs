@@ -95,8 +95,8 @@ impl Zone {
                     let c = chart::Chart {
                         width: 600,
                         height: 200,
-                        y_min: Some(0.0),
-                        y_max: Some(100.0),
+                        y_min: None,
+                        y_max: None,
                         data: self.moisture.iter().map(chart::Series::from).collect(),
                         bars: self.irrigation.iter().map(chart::Bar::from).collect()
                     };
