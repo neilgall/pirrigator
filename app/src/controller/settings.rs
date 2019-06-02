@@ -13,7 +13,7 @@ pub struct Zone {
 	pub name: String,
 	pub valve: String,
 	pub sensors: Vec<String>,
-	pub target: Measurement,
+	pub threshold: Measurement,
 	pub check: Vec<Check>
 }
 

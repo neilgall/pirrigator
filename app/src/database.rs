@@ -35,6 +35,14 @@ fn to_system_time(s: UnixTime) -> SystemTime {
 impl TimePeriod {
 	fn start_seconds(&self) -> UnixTime { to_seconds(&self.start) }
 	fn end_seconds(&self) -> UnixTime { to_seconds(&self.end) }
+
+	pub fn last_hour() -> TimePeriod {
+		let now = SystemTime::now();
+		TimePeriod {
+			start: now.checked_sub(Duration::from_secs(3600)).unwrap(),
+			end: now
+		}
+	}
 }
 
 impl Database {

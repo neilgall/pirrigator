@@ -49,14 +49,30 @@ impl Controller {
 
 	fn button_event(&mut self, b: &ButtonEvent) {
 		if let Transition::Released = b.transition {
-			self.valves.irrigate_all(self.irrigate_duration());
+			self.settings.zones.iter().for_each(|ref zone| self.irrigate_if_below_threshold(zone));
 		}
 	}
 
-	fn scheduled_event(&mut self, name: &str) {
-		match self.settings.zones.iter().find(|z| z.name == name) {
-			Some(zone) => self.valves.irrigate(&zone.valve, self.irrigate_duration()),
-			None => warn!("unknown zone for scheduled event: {}", name)
+	fn zone_by_name<'a>(&'a self, name: &str) -> Option<&'a Zone> {
+		self.settings.zones.iter().find(|z| z.name == name)
+	}
+
+	fn scheduled_event(&self, name: &str) {
+		match self.zone_by_name(name) {
+			Some(zone) => self.irrigate_if_below_threshold(zone),
+			None => warn!("unknown zone for irrigation: {}", name)
+		}
+	}
+
+	fn irrigate_if_below_threshold(&self, zone: &Zone) {
+		let any_below_threshold =  zone.sensors.iter()
+			.map(|sensor| self.database.get_moisture_range_since_last_irrigation(sensor, &zone.valve))
+			.any(|result| result.map(|range| range.start < zone.threshold).unwrap_or(false));
+		if any_below_threshold {
+			debug!("zone {} below moisture threshold in past hour; starting irrigation", zone.name);
+			self.valves.irrigate(&zone.valve, self.irrigate_duration());
+		} else {
+			debug!("zone {} above moisture threshold in part hour; skipping irrigation", zone.name);
 		}
 	}
 }
