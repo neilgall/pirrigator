@@ -66,13 +66,13 @@ impl Controller {
 
 	fn irrigate_if_below_threshold(&self, zone: &Zone) {
 		let any_below_threshold =  zone.sensors.iter()
-			.map(|sensor| self.database.get_moisture_range_since_last_irrigation(sensor, &zone.valve))
-			.any(|result| result.map(|range| range.start < zone.threshold).unwrap_or(false));
+			.map(|sensor| self.database.get_min_moisture_in_last_hour(sensor))
+			.any(|result| result.map(|m| m < zone.threshold).unwrap_or(false));
 		if any_below_threshold {
 			debug!("zone {} below moisture threshold in past hour; starting irrigation", zone.name);
 			self.valves.irrigate(&zone.valve, self.irrigate_duration());
 		} else {
-			debug!("zone {} above moisture threshold in part hour; skipping irrigation", zone.name);
+			debug!("zone {} above moisture threshold in past hour; skipping irrigation", zone.name);
 		}
 	}
 }
