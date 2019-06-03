@@ -5,9 +5,10 @@ use std::f64;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const HOUR: u32 = 3600;
+pub const HOURS_6: u32 = HOUR * 6;
 pub const DAY: u32 = 86400;
-pub const WEEK: u32 = 86400*7;
-pub const MONTH: u32 = 86400*30;
+pub const DAYS_2: u32 = DAY * 2;
+pub const WEEK: u32 = DAY * 7;
 
 pub fn to_utc(system_time: &SystemTime) -> DateTime<Utc> {
     let unixtime = system_time.duration_since(UNIX_EPOCH).unwrap();

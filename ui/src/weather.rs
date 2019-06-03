@@ -52,10 +52,10 @@ impl Model {
     pub fn render(&self) -> El<Message> {
         div![
             h2!["Weather"],
-            button![simple_ev(Ev::Click, Message::Fetch(HOUR)), "Last Hour"],
+            button![simple_ev(Ev::Click, Message::Fetch(HOURS_6)), "Last 6 Hours"],
             button![simple_ev(Ev::Click, Message::Fetch(DAY)), "Last Day"],
+            button![simple_ev(Ev::Click, Message::Fetch(DAYS_2)), "Last 2 Days"],
             button![simple_ev(Ev::Click, Message::Fetch(WEEK)), "Last Week"],
-            button![simple_ev(Ev::Click, Message::Fetch(MONTH)), "Last Month"],
             match self {
                 Model::NotLoaded =>
                     p!["Select a time range"],

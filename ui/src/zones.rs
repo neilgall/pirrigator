@@ -84,10 +84,10 @@ impl Zone {
     fn render(&self) -> El<Message> {
         div![
             h3![self.name],
-            button![simple_ev(Ev::Click, self.fetch_moisture_data_event(HOUR)), "Last Hour"],
+            button![simple_ev(Ev::Click, self.fetch_moisture_data_event(HOURS_6)), "Last 6 Hours"],
             button![simple_ev(Ev::Click, self.fetch_moisture_data_event(DAY)), "Last Day"],
+            button![simple_ev(Ev::Click, self.fetch_moisture_data_event(DAYS_2)), "Last 2 Days"],
             button![simple_ev(Ev::Click, self.fetch_moisture_data_event(WEEK)), "Last Week"],
-            button![simple_ev(Ev::Click, self.fetch_moisture_data_event(MONTH)), "Last Month"],
             div![
                 if self.moisture.is_empty() {
                     p!["Select a time range"]
