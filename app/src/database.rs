@@ -206,7 +206,7 @@ impl Database {
 		let mut stmt = conn.prepare(
 			"SELECT MIN(value) FROM moisture WHERE moisture.sensor = ?1 AND moisture.time > ?2"
 		)?;
-		let one_hour_ago = TimePeriod::last_hour().end_seconds();
+		let one_hour_ago = TimePeriod::last_hour().start_seconds();
 		stmt.query_row(params![&sensor, &one_hour_ago], |row| row.get(0))
 	}
 }
