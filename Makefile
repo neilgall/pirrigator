@@ -1,4 +1,4 @@
-HOST = pirrigator-root
+HOST ?= pirrigator-root
 CP = scp
 
 all: app

@@ -4,6 +4,7 @@ use std::time::{Duration, SystemTime};
 use std::str::FromStr;
 use std::sync::mpsc::Sender;
 use mcp3xxx::{AnalogIn, MCPDevice, SharedMCPDevice};
+use rustpi_io::gpio::*;
 use crate::event::Event;
 
 pub type Measurement = u16;
@@ -16,6 +17,7 @@ const CALIBRATED_RANGE: Measurement = CALIBRATED_WET - CALIBRATED_DRY;
 pub struct ADCSettings {
 	pub device: String,
 	pub device_type: String,
+	pub chip_select_gpio: u8,
 	pub enable_gpio: u8,
 	pub update: u64
 }
@@ -112,13 +114,18 @@ fn calibrate(m: Measurement, min: Measurement, max: Measurement) -> Measurement 
 	}
 }
 
-fn collect(samples: &mut Vec<Sample>, period: Duration) {
+fn collect(enable: &GPIO, samples: &mut Vec<Sample>, period: Duration) {
 	let until = SystemTime::now() + period;
 
 	while SystemTime::now() < until {
+		enable.set(GPIOData::High).unwrap();
+		sleep(Duration::from_millis(20));
+
 		for ref mut sample in &mut *samples {
 			sample.collect();
 		}
+
+		enable.set(GPIOData::Low).unwrap();
 		sleep(Duration::from_secs(5));
 	}	
 }
@@ -136,7 +143,7 @@ fn report(samples: Vec<Sample>, channel: &Sender<Event>) {
 	}
 }
 
-fn main(mcp: MCPDevice, settings: Vec<MoistureSensorSettings>, channel: Sender<Event>, period: Duration) {
+fn main(mcp: MCPDevice, enable: GPIO, settings: Vec<MoistureSensorSettings>, channel: Sender<Event>, period: Duration) {
 	let shared_mcp = mcp.share();
 	let sensors: Vec<Sensor> = settings.iter()
 		.map(|sensor| Sensor::new(shared_mcp.clone(), &sensor).unwrap())
@@ -145,7 +152,7 @@ fn main(mcp: MCPDevice, settings: Vec<MoistureSensorSettings>, channel: Sender<E
 	info!("Started {} moisture sensor(s)", sensors.len());
 	loop {
 		let mut samples: Vec<Sample> = sensors.iter().map(|s| Sample::new(s)).collect();
-		collect(&mut samples, period);
+		collect(&enable, &mut samples, period);
 		report(samples, &channel);
 	}
 }
@@ -166,11 +173,12 @@ impl MoistureSensor {
 	pub fn new(adc: &ADCSettings, sensors: &Vec<MoistureSensorSettings>, channel: Sender<Event>) -> Result<MoistureSensor, Box<Error>> {
 		let device = mcp3xxx::device_from_str(&adc.device)?;
 		let device_type = FromStr::from_str(&adc.device_type)?;
-		let mcp = MCPDevice::new(device, device_type, adc.enable_gpio)?;
+		let mcp = MCPDevice::new(device, device_type, adc.chip_select_gpio)?;
+		let enable = GPIO::new(adc.enable_gpio, GPIOMode::Write)?;
 
 		let period = Duration::from_secs(adc.update);
 		let sensors = sensors.to_vec();
-		let thread = spawn(move || { main(mcp, sensors, channel, period); });
+		let thread = spawn(move || { main(mcp, enable, sensors, channel, period); });
 
 		Ok(MoistureSensor { 
 			thread: Some(thread)

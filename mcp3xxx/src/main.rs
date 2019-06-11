@@ -3,6 +3,7 @@ extern crate mcp3xxx;
 use std::thread;
 use std::time::Duration;
 use mcp3xxx::*;
+use rustpi_io::gpio::*;
 
 fn main() {
 	let mcp = MCPDevice::new(rustpi_io::serial::Device::CE0, MCPDeviceType::MCP3008, 22)
@@ -18,11 +19,18 @@ fn main() {
 	let ch2 = AnalogIn::single(mcp.clone(), 2)
 		.expect("can't get analog in channel 2");
 
+	let enable = GPIO::new(24, GPIOMode::Write).unwrap();
+
 	loop {
+		enable.set(GPIOData::High).unwrap();
+		thread::sleep(Duration::from_millis(20));
+
 		let r0 = ch0.read_value().expect("can't read value from channel 0");
 		let r1 = ch1.read_value().expect("can't read value from channel 1");
 		let r2 = ch2.read_value().expect("can't read value from channel 2");
+		enable.set(GPIOData::Low).unwrap();
+
 		println!("{} {} {}", r0, r1, r2);
-		thread::sleep(Duration::from_millis(500));
+		thread::sleep(Duration::from_millis(480));
 	}
 }
