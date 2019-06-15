@@ -39,7 +39,7 @@ impl BeforeMiddleware for SharedImageCache {
 
 fn get_live_image(width: u16, height: u16) -> Result<Vec<u8>> {
 	let output = Command::new("/opt/vc/bin/raspistill")
-			.args(&["-o", "-", "-rot", "270", "-w", &format!("{}", width), "-h", &format!("{}", height)])
+			.args(&["-o", "-", "-rot", "0", "-w", &format!("{}", width), "-h", &format!("{}", height)])
 			.output()?;
 	Ok(output.stdout)	
 }
