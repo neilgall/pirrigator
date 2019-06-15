@@ -12,6 +12,7 @@ pub type Measurement = u16;
 const CALIBRATED_WET: Measurement = 100;
 const CALIBRATED_DRY: Measurement = 0;
 const CALIBRATED_RANGE: Measurement = CALIBRATED_WET - CALIBRATED_DRY;
+const SECONDS_BETWEEN_SAMPLES: u64 = 60;
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct ADCSettings {
@@ -126,7 +127,7 @@ fn collect(enable: &GPIO, samples: &mut Vec<Sample>, period: Duration) {
 		}
 
 		enable.set(GPIOData::Low).unwrap();
-		sleep(Duration::from_secs(5));
+		sleep(Duration::from_secs(SECONDS_BETWEEN_SAMPLES));
 	}	
 }
 
