@@ -30,11 +30,6 @@ fn update(msg: Message, model: &mut Pirrigator) -> Update<Message> {
 fn view(model: &Pirrigator) -> El<Message> {
     div![
         h1!["Pirrigator"],
-        img![
-            attrs!{ "src" => "/camera/640/480" },
-            attrs!{ "width" => 640 },
-            attrs!{ "height" => 480 }
-        ],
         model.weather.render().map_message(Message::Weather),
         model.zones.render().map_message(Message::Zones)
     ]
