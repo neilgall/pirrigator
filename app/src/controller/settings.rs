@@ -14,7 +14,8 @@ pub struct Zone {
 	pub valve: String,
 	pub sensors: Vec<String>,
 	pub threshold: Measurement,
-	pub check: Vec<Check>
+	pub check: Vec<Check>,
+	pub irrigate_seconds: u64
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -34,7 +35,6 @@ impl Eq for Location {}
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct ControllerSettings {
-	pub irrigate_seconds: u64,
 	pub location: Location,
 	pub zones: Vec<Zone>
 }
