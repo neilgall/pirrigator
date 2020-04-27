@@ -4,19 +4,41 @@ use iron::prelude::*;
 use iron::{status, typemap, BeforeMiddleware};
 use router::Router;
 use std::collections::HashMap;
+use std::error::Error;
 use std::iter::FromIterator;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use crate::controller::Zone;
 use super::error::bad_request;
 use super::get_param;
 use super::json::*;
 use super::middleware::DbRequestExtension;
 
+trait Timestamp {
+	fn timestamp(&self) -> Result<SystemTime, Box<dyn Error>>;
+}
+
+impl Timestamp for String {
+	fn timestamp(&self) -> Result<SystemTime, Box<dyn Error>> {
+		if self.chars().next() == Some('-') {
+			let delta = self[1..].parse()?;
+			Ok(SystemTime::now() - Duration::from_secs(delta))
+		} else {
+			let timestamp = self.parse()?;
+			Ok(UNIX_EPOCH + Duration::from_secs(timestamp))
+		}
+	}
+}
+
 fn get_time_period(req: &Request) -> IronResult<TimePeriod> {
-	let now = SystemTime::now();
-	let start = now - Duration::from_secs(get_param(req, "start")?);
-	let end = now - Duration::from_secs(get_param(req, "end")?);
+	let start = get_param::<String>(req, "start")?
+				.timestamp()
+				.map_err(|e| bad_request(&format!("cannot parse start time: {}", e.to_string())))?;
+
+	let end = get_param::<String>(req, "end")?
+				.timestamp()
+				.map_err(|e| bad_request(&format!("cannot parse end time: {}", e.to_string())))?;
+
 	Ok(TimePeriod { start, end })
 }
 
