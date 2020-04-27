@@ -31,10 +31,10 @@ ui-serve: ui-debug
 	cp -f ui/index.html ui/target/html/debug
 	(cd ui/target/html/debug && microserver --port 5000)
 
-app-release: ui-release
+app-release:
 	(cd app && cargo build --target=arm-unknown-linux-gnueabihf --release)
 
-run-locally: ui-release
+run-locally:
 	(cd app && cargo build && RUST_LOG=debug cargo run)
 
 install: app-release
