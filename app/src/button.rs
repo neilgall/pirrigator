@@ -56,7 +56,7 @@ struct Button {
 }
 
 impl Button {
-	fn new(settings: &ButtonSettings) -> Result<Self, Box<Error>> {
+	fn new(settings: &ButtonSettings) -> Result<Self, Box<dyn Error>> {
 		let gpio = GPIO::new(settings.gpio, GPIOMode::Read)?;
 		Ok(Button { name: settings.name.clone(), gpio })
 	}
@@ -110,7 +110,7 @@ fn send_event(button: &(&Button, bool), channel: &Sender<Event>) {
 }
 
 impl Buttons {
-	pub fn new(settings: &Vec<ButtonSettings>, channel: Sender<Event>) -> Result<Self, Box<Error>> {
+	pub fn new(settings: &Vec<ButtonSettings>, channel: Sender<Event>) -> Result<Self, Box<dyn Error>> {
 		let buttons = settings.iter()
 			.map(|b| Button::new(b).unwrap())
 			.collect();

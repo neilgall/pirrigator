@@ -104,7 +104,7 @@ impl Database {
 	fn store_weather(&self, event: &weather::WeatherEvent) -> Result<(), Error> {
 		self.conn().execute(
 			"INSERT INTO weather (time, temperature, humidity, pressure) VALUES (?1, ?2, ?3, ?4)",
-			&[&to_seconds(&event.timestamp) as &ToSql, &event.temperature, &event.humidity, &event.pressure]
+			&[&to_seconds(&event.timestamp) as &dyn ToSql, &event.temperature, &event.humidity, &event.pressure]
 		)?;
 		Ok(())
 	}
@@ -112,7 +112,7 @@ impl Database {
 	fn store_moisture(&self, event: &moisture::MoistureEvent) -> Result<(), Error> {
 		self.conn().execute(
 			"INSERT INTO moisture (time, sensor, value) VALUES (?1, ?2, ?3)",
-			&[&to_seconds(&event.timestamp) as &ToSql, &event.name, &event.value]
+			&[&to_seconds(&event.timestamp) as &dyn ToSql, &event.name, &event.value]
 		)?;
 		Ok(())
 	}
@@ -120,7 +120,7 @@ impl Database {
 	pub fn store_irrigation(&self, valve: &str, start: SystemTime, end: SystemTime) -> Result<(), Error> {
 		self.conn().execute(
 			"INSERT INTO irrigation (valve, start, end) VALUES (?1, ?2, ?3)",
-			&[&valve.to_string(), &to_seconds(&start) as &ToSql, &to_seconds(&end) as &ToSql]
+			&[&valve.to_string(), &to_seconds(&start) as &dyn ToSql, &to_seconds(&end) as &dyn ToSql]
 		)?;
 		Ok(())
 	}

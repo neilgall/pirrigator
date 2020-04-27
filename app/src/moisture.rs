@@ -60,7 +60,7 @@ impl Drop for MoistureSensor {
 }
 
 impl Sensor {
-	fn new(mcp: SharedMCPDevice, settings: &MoistureSensorSettings) -> Result<Self, Box<Error>> {
+	fn new(mcp: SharedMCPDevice, settings: &MoistureSensorSettings) -> Result<Self, Box<dyn Error>> {
 		let analog = AnalogIn::single(mcp, settings.channel)?;
 		Ok(Sensor { 
 			name: settings.name.clone(), 
@@ -171,7 +171,7 @@ fn send_event(sensor: &Sensor, value: u16, channel: &Sender<Event>) {
 }
 
 impl MoistureSensor {
-	pub fn new(adc: &ADCSettings, sensors: &Vec<MoistureSensorSettings>, channel: Sender<Event>) -> Result<MoistureSensor, Box<Error>> {
+	pub fn new(adc: &ADCSettings, sensors: &Vec<MoistureSensorSettings>, channel: Sender<Event>) -> Result<MoistureSensor, Box<dyn Error>> {
 		let device = mcp3xxx::device_from_str(&adc.device)?;
 		let device_type = FromStr::from_str(&adc.device_type)?;
 		let mcp = MCPDevice::new(device, device_type, adc.chip_select_gpio)?;

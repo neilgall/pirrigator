@@ -19,6 +19,6 @@ pub fn json<T: Serialize>(data: &T) -> IronResult<Response> {
 pub fn json_or_err<T: Serialize, E: Error>(result: Result<T, E>) -> IronResult<Response> {
 	match result  {
 		Ok(ref data) => json(data),
-		Err(e) => Err(bad_request(e.description()))
+		Err(e) => Err(bad_request(&e.to_string()))
 	}
 }

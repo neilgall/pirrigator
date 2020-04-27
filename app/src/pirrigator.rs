@@ -13,7 +13,7 @@ use crate::valve::Valves;
 use crate::weather::WeatherSensor;
 
 
-fn traverse<T, U, E>(t: &Option<T>, f: &Fn(&T) -> Result<U, E>) -> Result<Option<U>, E> {
+fn traverse<T, U, E>(t: &Option<T>, f: &dyn Fn(&T) -> Result<U, E>) -> Result<Option<U>, E> {
    match t {
        None => Ok(None),
        Some(t) => f(t).map(Some)
@@ -35,7 +35,7 @@ impl Drop for Pirrigator {
 }
 
 impl Pirrigator {
-	pub fn new(s: Settings) -> Result<Pirrigator, Box<Error>> {
+	pub fn new(s: Settings) -> Result<Pirrigator, Box<dyn Error>> {
 		let (tx, rx) = mpsc::channel();
 		let db = Database::new(Path::new(&s.database.path))?;
 

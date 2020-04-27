@@ -110,7 +110,7 @@ fn compensate_humidity(cal2: &Vec<u8>, cal3: &Vec<u8>, data: &Vec<u8>, t_fine: f
 }
 
 impl Bme280Device {
-	pub fn new(device: &str, address: u16) -> Result<Bme280Device, Box<Error>> {
+	pub fn new(device: &str, address: u16) -> Result<Bme280Device, Box<dyn Error>> {
 		let dev = LinuxI2CDevice::new(device, address)?;
 		Ok(Bme280Device { dev })
 	}

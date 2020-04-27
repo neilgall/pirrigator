@@ -62,7 +62,7 @@ fn send_event(data: Bme280Data, channel: &Sender<Event>) {
 }
 
 impl WeatherSensor {
-	pub fn new(settings: &WeatherSensorSettings, channel: Sender<Event>) -> Result<Self, Box<Error>> {
+	pub fn new(settings: &WeatherSensorSettings, channel: Sender<Event>) -> Result<Self, Box<dyn Error>> {
 		let device = Bme280Device::new(&settings.device, settings.address)?;
 		let period = Duration::from_secs(settings.update);
 		let thread = spawn(move || { main(device, channel, period) });

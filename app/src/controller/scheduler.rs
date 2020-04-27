@@ -19,7 +19,7 @@ pub struct ParseError {
 
 impl From<std::num::ParseIntError> for ParseError {
 	fn from(e: std::num::ParseIntError) -> Self {
-		ParseError { msg: e.description().to_string() }
+		ParseError { msg: e.to_string() }
 	}
 }
 

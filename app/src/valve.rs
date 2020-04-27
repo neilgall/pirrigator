@@ -34,7 +34,7 @@ struct Valve {
 }
 
 impl Valve {
-	fn new(s: &ValveSettings) -> Result<Self, Box<Error>> {
+	fn new(s: &ValveSettings) -> Result<Self, Box<dyn Error>> {
 		let gpio = GPIO::new(s.gpio, GPIOMode::Write)?;
 		Ok(Valve { 
 			name: s.name.clone(),
@@ -43,7 +43,7 @@ impl Valve {
 		})
 	}
 
-	fn open(&mut self) -> Result<(), Box<Error>> {
+	fn open(&mut self) -> Result<(), Box<dyn Error>> {
 		match self.state {
 			ValveState::Open => {
 				// already open
@@ -56,7 +56,7 @@ impl Valve {
 		Ok(())
 	}
 
-	fn close(&mut self) -> Result<(), Box<Error>> {
+	fn close(&mut self) -> Result<(), Box<dyn Error>> {
 		match self.state {
 			ValveState::Closed => {
 				// already closed
@@ -69,7 +69,7 @@ impl Valve {
 		Ok(())
 	}
 
-	fn irrigate_event(&mut self, duration: Duration, database: &Database) -> Result<(), Box<Error>> {
+	fn irrigate_event(&mut self, duration: Duration, database: &Database) -> Result<(), Box<dyn Error>> {
 		self.open()?;
 		let opened = SystemTime::now();
 		sleep(duration);
@@ -119,7 +119,7 @@ impl Drop for Valves {
 }
 
 impl Valves {
-	pub fn new(settings: &Vec<ValveSettings>, database: Database) -> Result<Self, Box<Error>> {
+	pub fn new(settings: &Vec<ValveSettings>, database: Database) -> Result<Self, Box<dyn Error>> {
 		let valves: Vec<Valve> = settings.iter()
 			.map(|v| Valve::new(v).unwrap())
 			.collect();
