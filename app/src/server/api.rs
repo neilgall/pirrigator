@@ -1,5 +1,3 @@
-use crate::database::TimePeriod;
-
 use iron::prelude::*;
 use iron::{status, typemap, BeforeMiddleware};
 use router::Router;
@@ -8,7 +6,10 @@ use std::error::Error;
 use std::iter::FromIterator;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
 use crate::controller::Zone;
+use crate::time::{TimePeriod, UnixTime};
+
 use super::error::bad_request;
 use super::get_param;
 use super::json::*;
@@ -89,7 +90,7 @@ fn moisture_history_for_zone(req: &mut Request) -> IronResult<Response> {
 	let time_period = get_time_period(req)?;
 	let db = req.get_database();
 
-	let data: Result<Vec<(String, Vec<(SystemTime, u16)>)>, rusqlite::Error> = zone.sensors.iter()
+	let data: Result<Vec<(String, Vec<(UnixTime, u16)>)>, rusqlite::Error> = zone.sensors.iter()
 		.map(|sensor| Ok( (sensor.clone(), db.get_moisture_history(&sensor, &time_period)?) ))
 		.collect();
 

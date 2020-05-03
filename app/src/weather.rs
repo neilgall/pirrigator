@@ -4,6 +4,7 @@ use std::sync::mpsc::Sender;
 use std::thread::{JoinHandle, spawn, sleep};
 use std::time::{Duration, SystemTime};
 use crate::event::Event;
+use crate::time::{UnixTime, to_unix_time};
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct WeatherSensorSettings {
@@ -22,7 +23,7 @@ pub type Pressure = f64;
 
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct WeatherEvent {
-	pub timestamp: SystemTime,
+	pub timestamp: UnixTime,
 	pub temperature: Temperature,
 	pub humidity: Humidity,
 	pub pressure: Pressure
@@ -49,7 +50,7 @@ fn main(mut device: Bme280Device, channel: Sender<Event>, period: Duration) {
 
 fn send_event(data: Bme280Data, channel: &Sender<Event>) {
 	let event = WeatherEvent {
-		timestamp: SystemTime::now(),
+		timestamp: to_unix_time(&SystemTime::now()),
 		temperature: data.temperature,
 		humidity: data.humidity,
 		pressure: data.pressure

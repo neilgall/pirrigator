@@ -8,6 +8,7 @@ mod database;
 mod event;
 mod moisture;
 mod server;
+mod time;
 mod valve;
 mod weather;
 
