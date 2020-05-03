@@ -2,9 +2,9 @@ use bme280::{Bme280Device, Bme280Data};
 use std::error::Error;
 use std::sync::mpsc::Sender;
 use std::thread::{JoinHandle, spawn, sleep};
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 use crate::event::Event;
-use crate::time::{UnixTime, to_unix_time};
+use crate::time::UnixTime;
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct WeatherSensorSettings {
@@ -23,10 +23,16 @@ pub type Pressure = f64;
 
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct WeatherEvent {
-	pub timestamp: UnixTime,
+	pub unix_time: UnixTime,
 	pub temperature: Temperature,
 	pub humidity: Humidity,
 	pub pressure: Pressure
+}
+
+impl WeatherEvent {
+	pub fn timestamp(&self) -> u32 {
+		self.unix_time.timestamp()
+	}
 }
 
 impl Drop for WeatherSensor {
@@ -50,7 +56,7 @@ fn main(mut device: Bme280Device, channel: Sender<Event>, period: Duration) {
 
 fn send_event(data: Bme280Data, channel: &Sender<Event>) {
 	let event = WeatherEvent {
-		timestamp: to_unix_time(&SystemTime::now()),
+		unix_time: UnixTime::now(),
 		temperature: data.temperature,
 		humidity: data.humidity,
 		pressure: data.pressure

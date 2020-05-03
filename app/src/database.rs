@@ -7,7 +7,7 @@ use rusqlite::{Error, params, NO_PARAMS};
 use rusqlite::types::ToSql;
 use std::ops::Range;
 use std::path::Path;
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 use crate::event::Event;
 use crate::weather;
 use crate::moisture;
@@ -76,7 +76,7 @@ impl Database {
 	fn store_weather(&self, event: &weather::WeatherEvent) -> Result<(), Error> {
 		self.conn().execute(
 			"INSERT INTO weather (time, temperature, humidity, pressure) VALUES (?1, ?2, ?3, ?4)",
-			&[&event.timestamp as &dyn ToSql, &event.temperature, &event.humidity, &event.pressure]
+			&[&event.timestamp() as &dyn ToSql, &event.temperature, &event.humidity, &event.pressure]
 		)?;
 		Ok(())
 	}
@@ -84,15 +84,15 @@ impl Database {
 	fn store_moisture(&self, event: &moisture::MoistureEvent) -> Result<(), Error> {
 		self.conn().execute(
 			"INSERT INTO moisture (time, sensor, value) VALUES (?1, ?2, ?3)",
-			&[&event.timestamp as &dyn ToSql, &event.name, &event.value]
+			&[&event.timestamp() as &dyn ToSql, &event.name, &event.value]
 		)?;
 		Ok(())
 	}
 
-	pub fn store_irrigation(&self, valve: &str, start: SystemTime, end: SystemTime) -> Result<(), Error> {
+	pub fn store_irrigation(&self, valve: &str, start: UnixTime, end: UnixTime) -> Result<(), Error> {
 		self.conn().execute(
 			"INSERT INTO irrigation (valve, start, end) VALUES (?1, ?2, ?3)",
-			&[&valve.to_string(), &to_unix_time(&start) as &dyn ToSql, &to_unix_time(&end) as &dyn ToSql]
+			&[&valve.to_string(), &start.timestamp() as &dyn ToSql, &end.timestamp() as &dyn ToSql]
 		)?;
 		Ok(())
 	}
@@ -103,7 +103,7 @@ impl Database {
 			"SELECT time, temperature, humidity, pressure FROM weather ORDER BY time DESC LIMIT 1")?;
 		stmt.query_row(params![], |row| {
 			Ok(weather::WeatherEvent {
-				timestamp: row.get(0)?,
+				unix_time: UnixTime::from_timestamp(row.get(0)?),
 				temperature: row.get(1)?,
 				humidity: row.get(2)?,
 				pressure: row.get(3)?
@@ -118,7 +118,7 @@ impl Database {
 		)?;
 		let iter = stmt.query_map(params![period.start_seconds(), period.end_seconds()], |row| {
 			Ok( weather::WeatherEvent { 
-				timestamp: row.get(0)?,
+				unix_time: UnixTime::from_timestamp(row.get(0)?),
 				temperature: row.get(1)?,
 				humidity: row.get(2)?,
 				pressure: row.get(3)?
@@ -140,7 +140,7 @@ impl Database {
 			"SELECT time, value FROM moisture WHERE sensor == ?1 AND ?2 <= time AND time < ?3 ORDER BY time ASC"
 		)?;
 		let iter = stmt.query_map(params![&sensor, period.start_seconds(), period.end_seconds()], |row| {
-			Ok( (row.get(0)?, row.get(1)?) )
+			Ok( (UnixTime::from_timestamp(row.get(0)?), row.get(1)?) )
 		})?;
 		iter.collect()
 	}
@@ -151,9 +151,9 @@ impl Database {
 			"SELECT start, end FROM irrigation WHERE valve = ?1 AND ?2 <= start AND end < ?3 ORDER BY start ASC"
 		)?;
 		let iter = stmt.query_map(params![&valve, period.start_seconds(), period.end_seconds()], |row| {
-			let start: UnixTime = row.get(0)?;
-			let end: UnixTime = row.get(1)?;
-			Ok( (start, Duration::from_secs((end - start) as u64)) )
+			let start = UnixTime::from_timestamp(row.get(0)?);
+			let end = UnixTime::from_timestamp(row.get(1)?);
+			Ok( (start, end - start) )
 		})?;
 		iter.collect()
 	}

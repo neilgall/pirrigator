@@ -6,7 +6,7 @@ use std::sync::mpsc::Sender;
 use mcp3xxx::{AnalogIn, MCPDevice, SharedMCPDevice};
 use rustpi_io::gpio::*;
 use crate::event::Event;
-use crate::time::{UnixTime, to_unix_time};
+use crate::time::UnixTime;
 
 pub type Measurement = u16;
 
@@ -40,9 +40,15 @@ pub struct MoistureSensor {
 
 #[derive(Debug)]
 pub struct MoistureEvent {
-	pub timestamp: UnixTime,
+	pub unix_time: UnixTime,
 	pub name: String,
 	pub value: Measurement
+}
+
+impl MoistureEvent {
+	pub fn timestamp(&self) -> u32 {
+		self.unix_time.timestamp()
+	}
 }
 
 struct Sensor {
@@ -161,7 +167,7 @@ fn main(mcp: MCPDevice, enable: GPIO, settings: Vec<MoistureSensorSettings>, cha
 
 fn send_event(sensor: &Sensor, value: u16, channel: &Sender<Event>) {
 	let event = MoistureEvent { 
-		timestamp: to_unix_time(&SystemTime::now()),
+		unix_time: UnixTime::now(),
 		name: sensor.name.clone(),
 		value
 	};

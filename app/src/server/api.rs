@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::iter::FromIterator;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 
 use crate::controller::Zone;
 use crate::time::{TimePeriod, UnixTime};
@@ -16,17 +16,17 @@ use super::json::*;
 use super::middleware::DbRequestExtension;
 
 trait Timestamp {
-	fn timestamp(&self) -> Result<SystemTime, Box<dyn Error>>;
+	fn timestamp(&self) -> Result<UnixTime, Box<dyn Error>>;
 }
 
 impl Timestamp for String {
-	fn timestamp(&self) -> Result<SystemTime, Box<dyn Error>> {
+	fn timestamp(&self) -> Result<UnixTime, Box<dyn Error>> {
 		if self.chars().next() == Some('-') {
 			let delta = self[1..].parse()?;
-			Ok(SystemTime::now() - Duration::from_secs(delta))
+			Ok(UnixTime::now() - Duration::from_secs(delta))
 		} else {
 			let timestamp = self.parse()?;
-			Ok(UNIX_EPOCH + Duration::from_secs(timestamp))
+			Ok(UnixTime::from_timestamp(timestamp))
 		}
 	}
 }

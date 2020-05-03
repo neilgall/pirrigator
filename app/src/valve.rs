@@ -3,10 +3,12 @@ extern crate rustpi_io;
 use rustpi_io::gpio::*;
 
 use crate::database::Database;
+use crate::time::UnixTime;
+
 use std::error::Error;
 use std::sync::mpsc;
 use std::thread::{JoinHandle, sleep, spawn};
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
 const SECONDS_BETWEEN_EVENTS: u64 = 5;
 
@@ -71,10 +73,10 @@ impl Valve {
 
 	fn irrigate_event(&mut self, duration: Duration, database: &Database) -> Result<(), Box<dyn Error>> {
 		self.open()?;
-		let opened = SystemTime::now();
+		let opened = UnixTime::now();
 		sleep(duration);
 		self.close()?;
-		database.store_irrigation(&self.name, opened, SystemTime::now())?;
+		database.store_irrigation(&self.name, opened, UnixTime::now())?;
 		sleep(Duration::from_secs(SECONDS_BETWEEN_EVENTS));
 		Ok(())
 	}
