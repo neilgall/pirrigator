@@ -6,9 +6,8 @@ use std::sync::mpsc::Sender;
 use mcp3xxx::{AnalogIn, MCPDevice, SharedMCPDevice};
 use rustpi_io::gpio::*;
 use crate::event::Event;
-use crate::time::UnixTime;
-
-pub type Measurement = u16;
+use common::moisture::{Measurement, MoistureEvent};
+use common::time::UnixTime;
 
 const CALIBRATED_WET: Measurement = 100;
 const CALIBRATED_DRY: Measurement = 0;
@@ -38,18 +37,6 @@ pub struct MoistureSensor {
 	thread: Option<JoinHandle<()>>
 }
 
-#[derive(Debug)]
-pub struct MoistureEvent {
-	pub unix_time: UnixTime,
-	pub name: String,
-	pub value: Measurement
-}
-
-impl MoistureEvent {
-	pub fn timestamp(&self) -> u32 {
-		self.unix_time.timestamp()
-	}
-}
 
 struct Sensor {
 	name: String,

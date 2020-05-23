@@ -1,4 +1,4 @@
-use crate::moisture::Measurement;
+use common::moisture::Measurement;
 
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]

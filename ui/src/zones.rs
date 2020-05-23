@@ -6,6 +6,8 @@ use seed::{Method, Request};
 use std::time::{Duration, SystemTime};
 use crate::utils::*;
 use crate::chart;
+use common::moisture::Measurement;
+use common::time::{TimeSeries, UnixTime};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct IrrigationRow {
@@ -14,17 +16,11 @@ pub struct IrrigationRow {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct MoistureRow {
-    timestamp: SystemTime,
-    value: u16
-}
-
-#[derive(Clone, Debug, Deserialize)]
 pub struct Zone {
     pub name: String,
     pub sensors: Vec<String>,
     pub irrigation: Vec<IrrigationRow>,
-    pub moisture: HashMap<String, Vec<MoistureRow>>
+    pub moisture: HashMap<String, TimeSeries<Measurement>>
 }
 
 #[derive(Clone, Debug)]
@@ -35,6 +31,8 @@ pub enum Model {
     Failed(String)
 }
 
+type MoistureRow = (UnixTime, Measurement);
+
 impl Default for Model {
     fn default() -> Self { Model::NotLoaded }
 }
@@ -44,14 +42,14 @@ pub enum Message {
     FetchZones,
     FetchedZones(Vec<String>),
     FetchMoistureData(String, u32),
-    FetchedMoistureData(String, Vec<(String, Vec<MoistureRow>)>, u32),
+    FetchedMoistureData(String, Vec<(String, TimeSeries<Measurement>)>, u32),
     FetchedIrrigationData(String, Vec<IrrigationRow>),
     Failed(JsValue)
 }
 
 impl From<&MoistureRow> for chart::DataPoint {
     fn from(m: &MoistureRow) -> Self {
-        chart::DataPoint { time: m.timestamp.clone(), value: m.value as f64 }
+        chart::DataPoint { time: m.0.system_time(), value: m.1 as f64 }
     }
 }
 
@@ -174,7 +172,7 @@ impl Model {
     }
 
     fn fetch_moisture_data(&mut self, name: String, duration: u32) -> impl Future<Item = Message, Error = Message> {
-        let url = format!("/api/zone/{}/moisture/{}/0", urlencoding::encode(&name), duration);
+        let url = format!("/api/zone/{}/moisture/-{}/-0", urlencoding::encode(&name), duration);
         Request::new(&url)
             .method(Method::Get)
             .fetch_json()
@@ -183,7 +181,7 @@ impl Model {
     }
 
     fn fetch_irrigation_data(&self, name: String, duration: u32) -> impl Future<Item = Message, Error = Message> {
-        let url = format!("/api/zone/{}/irrigation/{}/0", urlencoding::encode(&name), duration);
+        let url = format!("/api/zone/{}/irrigation/-{}/-0", urlencoding::encode(&name), duration);
         Request::new(&url)
             .method(Method::Get)
             .fetch_json()

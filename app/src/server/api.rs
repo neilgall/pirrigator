@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::controller::Zone;
-use crate::time::{TimePeriod, UnixTime};
+use common::time::{TimePeriod, UnixTime};
 
 use super::error::bad_request;
 use super::get_param;

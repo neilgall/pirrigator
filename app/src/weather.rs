@@ -4,7 +4,9 @@ use std::sync::mpsc::Sender;
 use std::thread::{JoinHandle, spawn, sleep};
 use std::time::Duration;
 use crate::event::Event;
-use crate::time::UnixTime;
+
+use common::time::UnixTime;
+use common::weather::WeatherEvent;
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct WeatherSensorSettings {
@@ -15,24 +17,6 @@ pub struct WeatherSensorSettings {
 
 pub struct WeatherSensor {
 	thread: Option<JoinHandle<()>>
-}
-
-pub type Temperature = f64;
-pub type Humidity = f64;
-pub type Pressure = f64;
-
-#[derive(Debug, Clone, Copy, Serialize)]
-pub struct WeatherEvent {
-	pub unix_time: UnixTime,
-	pub temperature: Temperature,
-	pub humidity: Humidity,
-	pub pressure: Pressure
-}
-
-impl WeatherEvent {
-	pub fn timestamp(&self) -> u32 {
-		self.unix_time.timestamp()
-	}
 }
 
 impl Drop for WeatherSensor {

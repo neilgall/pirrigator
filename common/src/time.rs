@@ -1,5 +1,7 @@
+use std::fmt;
 use std::ops::{Add, Sub};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use serde::de::{Deserialize, Deserializer, Visitor};
 use serde::ser::{Serialize, Serializer};
 
 #[derive(Debug, Clone, Copy)]
@@ -25,7 +27,7 @@ impl UnixTime {
 		self.timestamp
 	}
 
-	fn system_time(&self) -> SystemTime {
+	pub fn system_time(&self) -> SystemTime {
 		UNIX_EPOCH + Duration::from_secs(self.timestamp as u64)
 	}
 }
@@ -58,7 +60,26 @@ impl Serialize for UnixTime {
 	fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
 		serializer.serialize_u32(self.timestamp)
 	}
+}
 
+impl<'de> Deserialize<'de> for UnixTime {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+
+		struct UnixTimeVisitor;
+		impl<'de> Visitor<'de> for UnixTimeVisitor {
+			type Value = UnixTime;
+
+			fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        		formatter.write_str("a unix-epoch timestamp")
+    		}
+
+			fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E> {
+				Ok(UnixTime { timestamp: value as u32 })
+			}
+		}
+
+		deserializer.deserialize_u32(UnixTimeVisitor)
+	}
 }
 
 pub type TimeSeries<T> = Vec<(UnixTime, T)>;

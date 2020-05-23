@@ -35,7 +35,7 @@ ui-serve: ui-debug
 app-release: ui-release
 	(cd app && cargo build --target=arm-unknown-linux-gnueabihf --release)
 
-run-locally: ui-debug
+run-locally: ui-release
 	(cd app && cargo build && RUST_LOG=debug cargo run)
 
 install: app-release

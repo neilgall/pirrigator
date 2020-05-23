@@ -1,23 +1,15 @@
 use futures::Future;
 use seed::prelude::*;
 use seed::{Method, Request};
-use std::time::SystemTime;
 use crate::chart;
 use crate::utils::*;
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct WeatherRow {
-    timestamp: SystemTime,
-    temperature: f64,
-    humidity: f64,
-    pressure: f64,
-}
+use common::weather::WeatherEvent;
 
 #[derive(Clone, Debug)]
 pub enum Model {
     NotLoaded,
     Loading,
-    Loaded(Vec<WeatherRow>),
+    Loaded(Vec<WeatherEvent>),
     Failed(String)
 }
 
@@ -28,11 +20,11 @@ impl Default for Model {
 #[derive(Clone)]
 pub enum Message {
     Fetch(u32),
-    Fetched(Vec<WeatherRow>),
+    Fetched(Vec<WeatherEvent>),
     Failed(JsValue)
 }
 
-fn chart(data: &Vec<WeatherRow>, label: &str, y_min: Option<f64>, f: &dyn Fn(&WeatherRow) -> f64) -> chart::Chart {
+fn chart(data: &Vec<WeatherEvent>, label: &str, y_min: Option<f64>, f: &dyn Fn(&WeatherEvent) -> f64) -> chart::Chart {
     chart::Chart {
         width: 600,
         height: 200,
@@ -41,7 +33,7 @@ fn chart(data: &Vec<WeatherRow>, label: &str, y_min: Option<f64>, f: &dyn Fn(&We
         data: vec![
             chart::Series {
                 label: label.to_string(),
-                data: data.iter().map(|r| chart::DataPoint { time: r.timestamp, value: f(r) }).collect()
+                data: data.iter().map(|e| chart::DataPoint { time: e.system_time(), value: f(e) }).collect()
             }
         ],
         bars: vec![]
@@ -92,7 +84,7 @@ impl Model {
     }
 
     pub fn fetch(&self, duration: u32) -> impl Future<Item = Message, Error = Message> {
-        let url = format!("/api/weather/{}/0", duration);
+        let url = format!("/api/weather/-{}/-0", duration);
 
         Request::new(&url)
             .method(Method::Get)

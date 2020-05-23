@@ -7,7 +7,8 @@ edition = "2018"
 [dependencies]
 bme280 = { path = "../bme280" }
 mcp3xxx = { path = "../mcp3xxx" }
-chrono = "0.4.6"
+common = { path = "../common" }
+chrono = "0.4.11"
 config = "0.9.2"
 env_logger = "0.6.1"
 iron = "0.6.0"
@@ -22,7 +23,7 @@ r2d2_sqlite = "0.9.0"
 router = "0.6.0"
 rusqlite = "0.17.0"
 rustpi_io = "0.1.0"
-serde = "^1.0.8"
-serde_derive = "^1.0.8"
+serde = "^1.0.110"
+serde_derive = "^1.0.110"
 sunrise = "1.0.0"
 urlencoding = "1.0.0"

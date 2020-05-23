@@ -1,6 +1,6 @@
 use crate::button;
-use crate::moisture;
-use crate::weather;
+use common::moisture;
+use common::weather;
 
 #[derive(Debug)]
 pub enum Event {
