@@ -1,9 +1,8 @@
 extern crate urlencoding;
 
-use futures::Future;
 use seed::prelude::*;
-use seed::{Method, Request};
-use std::time::{Duration, SystemTime};
+use std::collections::HashMap;
+use std::time::Duration;
 use crate::utils::*;
 use crate::chart;
 use common::moisture::Measurement;
@@ -11,7 +10,7 @@ use common::time::{TimeSeries, UnixTime};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct IrrigationRow {
-    start: SystemTime,
+    start: UnixTime,
     duration: Duration
 }
 
@@ -32,6 +31,8 @@ pub enum Model {
 }
 
 type MoistureRow = (UnixTime, Measurement);
+type MoistureData = Vec<(String, TimeSeries<Measurement>)>;
+type IrrigationData = Vec<IrrigationRow>;
 
 impl Default for Model {
     fn default() -> Self { Model::NotLoaded }
@@ -42,8 +43,8 @@ pub enum Message {
     FetchZones,
     FetchedZones(Vec<String>),
     FetchMoistureData(String, u32),
-    FetchedMoistureData(String, Vec<(String, TimeSeries<Measurement>)>, u32),
-    FetchedIrrigationData(String, Vec<IrrigationRow>),
+    FetchedMoistureData(String, MoistureData, u32),
+    FetchedIrrigationData(String, IrrigationData),
     Failed(JsValue)
 }
 
@@ -61,7 +62,7 @@ impl From<(&String, &Vec<MoistureRow>)> for chart::Series {
 
 impl From<&IrrigationRow> for chart::Bar {
     fn from(r: &IrrigationRow) -> Self {
-        chart::Bar { time: r.start, duration: r.duration }
+        chart::Bar { time: r.start.system_time(), duration: r.duration }
     }
 }
 
@@ -79,9 +80,9 @@ impl Zone {
         Message::FetchMoistureData(self.name.to_string(), t)
     }
 
-    fn render(&self) -> El<Message> {
+    fn render(&self) -> Node<Message> {
         div![
-            h3![self.name],
+            h3![&self.name],
             button![simple_ev(Ev::Click, self.fetch_moisture_data_event(HOURS_6)), "Last 6 Hours"],
             button![simple_ev(Ev::Click, self.fetch_moisture_data_event(DAY)), "Last Day"],
             button![simple_ev(Ev::Click, self.fetch_moisture_data_event(DAYS_2)), "Last 2 Days"],
@@ -98,7 +99,7 @@ impl Zone {
                         data: self.moisture.iter().map(chart::Series::from).collect(),
                         bars: self.irrigation.iter().map(chart::Bar::from).collect()
                     };
-                    c.render().map_message(|_| Message::FetchZones)
+                    c.render().map_msg(|_| Message::FetchZones)
                 }
             ]
         ]
@@ -106,24 +107,6 @@ impl Zone {
 }
 
 impl Model {
-    pub fn render(&self) -> El<Message> {
-        div![
-            h2!["Zones"],
-            match self {
-                Model::NotLoaded => 
-                    button![simple_ev(Ev::Click, Message::FetchZones), "Get Zones"],
-                Model::Loading =>
-                    p!["Loading..."],
-                Model::Failed(e) =>
-                    p![e],
-                Model::Loaded(zones) => {
-                    let els: Vec<El<Message>> = zones.iter().map(|z| z.render()).collect();
-                    div![els]
-                }
-            }
-        ]
-    }
-
     fn zone(&mut self, name: &str) -> &mut Zone {
         if let Model::Loaded(ref mut zones) = self {
             zones.iter_mut().find(|ref z| z.name == name).unwrap()
@@ -131,61 +114,79 @@ impl Model {
             panic!("unknown zone {}", name)
         }
     }
+}
 
-    pub fn update(&mut self, msg: Message) -> Update<Message> {
-        match msg {
-            Message::FetchZones => {
-                *self = Model::Loading;
-                Update::with_future_msg(self.fetch_zones()).render()
-            }   
-            Message::FetchedZones(zones) => {
-                *self = Model::Loaded(zones.iter().map(|name| Zone::new(name)).collect());
-                Render.into()
-            }
-            Message::FetchMoistureData(name, t) => {
-                Update::with_future_msg(self.fetch_moisture_data(name, t)).render()
-            }
-            Message::FetchedMoistureData(name, moisture_data, t) => {
-                let zone = self.zone(&name);
-                for (sensor_name, data) in moisture_data {
-                    zone.moisture.insert(sensor_name, data);
-                }
-                Update::with_future_msg(self.fetch_irrigation_data(name, t)).render()
-            }
-            Message::FetchedIrrigationData(name, irrigation_data) => {
-                self.zone(&name).irrigation = irrigation_data;
-                Render.into()
-            }
-            Message::Failed(e) => {
-                *self = Model::Failed(e.as_string().unwrap_or("Unknown error".to_string()));
-                Render.into()
+pub fn render(model: &Model) -> Node<Message> {
+    div![
+        h2!["Zones"],
+        match model {
+            Model::NotLoaded => 
+                button![simple_ev(Ev::Click, Message::FetchZones), "Get Zones"],
+            Model::Loading =>
+                p!["Loading..."],
+            Model::Failed(e) =>
+                p![e],
+            Model::Loaded(zones) => {
+                let els: Vec<Node<Message>> = zones.iter().map(|z| z.render()).collect();
+                div![els]
             }
         }
-    }
+    ]
+}
 
-    fn fetch_zones(&self) -> impl Future<Item = Message, Error = Message> {
-        Request::new("/api/zone/list")
-            .method(Method::Get)
-            .fetch_json()
-            .map(Message::FetchedZones)
-            .map_err(Message::Failed)
-    }
+pub fn update(msg: Message, model: &mut Model, orders: &mut impl Orders<Message>) {
+    match msg {
+        Message::FetchZones => {
+            orders.perform_cmd(async {
+                let response = fetch("/api/zone/list").await.expect("fetch zones failed");
+                let zones = response.check_status()
+                                    .expect("status check failed")
+                                    .json::<Vec<String>>()
+                                    .await
+                                    .expect("deserialisation failed");
+                Message::FetchedZones(zones)
+            });
+            *model = Model::Loading;
+        }   
+        Message::FetchedZones(zones) => {
+            *model = Model::Loaded(zones.iter().map(|name| Zone::new(name)).collect());
+        }
+        Message::FetchMoistureData(name, t) => {
+            let duration = t;
+            orders.perform_cmd(async move {
+                let request = Request::new(format!("/api/zone/{}/moisture/-{}/-0", urlencoding::encode(&name), duration));
+                let response = fetch(request).await.expect("failed to fetch zone data");
+                let data = response.check_status()
+                                   .expect("status check failed")
+                                   .json::<MoistureData>()
+                                   .await
+                                   .expect("deserialisation failed");
+                Message::FetchedMoistureData(name, data, duration)
+            });
+        }
+        Message::FetchedMoistureData(name, moisture_data, t) => {
+            let zone = model.zone(&name);
+            for (sensor_name, data) in moisture_data {
+                zone.moisture.insert(sensor_name, data);
+            }
 
-    fn fetch_moisture_data(&mut self, name: String, duration: u32) -> impl Future<Item = Message, Error = Message> {
-        let url = format!("/api/zone/{}/moisture/-{}/-0", urlencoding::encode(&name), duration);
-        Request::new(&url)
-            .method(Method::Get)
-            .fetch_json()
-            .map(move |data| Message::FetchedMoistureData(name, data, duration))
-            .map_err(Message::Failed)
-    }
-
-    fn fetch_irrigation_data(&self, name: String, duration: u32) -> impl Future<Item = Message, Error = Message> {
-        let url = format!("/api/zone/{}/irrigation/-{}/-0", urlencoding::encode(&name), duration);
-        Request::new(&url)
-            .method(Method::Get)
-            .fetch_json()
-            .map(|data| Message::FetchedIrrigationData(name, data))
-            .map_err(Message::Failed)
+            let duration = t;
+            orders.perform_cmd(async move {
+                let request = Request::new(format!("/api/zone/{}/irrigation/-{}/-0", urlencoding::encode(&name), duration));
+                let response = fetch(request).await.expect("failed to fetch irrigation data");
+                let data = response.check_status()
+                                   .expect("status check failed")
+                                   .json::<IrrigationData>()
+                                   .await
+                                   .expect("deserialisation failed");
+                Message::FetchedIrrigationData(name, data)
+            });
+        }
+        Message::FetchedIrrigationData(name, irrigation_data) => {
+            model.zone(&name).irrigation = irrigation_data;
+        }
+        Message::Failed(e) => {
+            *model = Model::Failed(e.as_string().unwrap_or("Unknown error".to_string()));
+        }
     }
 }

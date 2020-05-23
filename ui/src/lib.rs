@@ -20,24 +20,26 @@ enum Message {
     Zones(zones::Message),
 }
 
-fn update(msg: Message, model: &mut Pirrigator) -> Update<Message> {
+fn init(_: Url, _: &mut impl Orders<Message>) -> Pirrigator {
+    Pirrigator::default()
+}
+
+fn update(msg: Message, model: &mut Pirrigator, orders: &mut impl Orders<Message>) {
     match msg {
-        Message::Weather(msg) => model.weather.update(msg).map(Message::Weather),
-        Message::Zones(msg) => model.zones.update(msg).map(Message::Zones)
+        Message::Weather(msg) => weather::update(msg, &mut model.weather, &mut orders.proxy(Message::Weather)),
+        Message::Zones(msg) => zones::update(msg, &mut model.zones, &mut orders.proxy(Message::Zones))
     }
 }
 
-fn view(model: &Pirrigator) -> El<Message> {
+fn view(model: &Pirrigator) -> Node<Message> {
     div![
         h1!["Pirrigator"],
-        model.weather.render().map_message(Message::Weather),
-        model.zones.render().map_message(Message::Zones)
+        weather::render(&model.weather).map_msg(Message::Weather),
+        zones::render(&model.zones).map_msg(Message::Zones)
     ]
 }
 
 #[wasm_bindgen]
 pub fn render() {
-    seed::App::build(Pirrigator::default(), update, view)
-        .finish()
-        .run();
+    seed::App::start("app", init, update, view);
 }

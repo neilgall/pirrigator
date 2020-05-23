@@ -165,7 +165,6 @@ const LABEL_GAP_Y: H = 15;
 const LABEL_GAP_X: W = 5;
 const KEY_LABEL_WIDTH: W = 180;
 
-type Fragment = Vec<El<Message>>;
 
 impl Chart {
 	fn value_range(&self) -> (f64, f64) {
@@ -197,7 +196,7 @@ impl Chart {
 		Fill::new("blue", 0.75)
 	}
 
-	fn line<'a>(&self, x1: X, y1: Y, x2: X, y2: Y, stroke: &Stroke<'a>) -> El<Message> {
+	fn line<'a>(&self, x1: X, y1: Y, x2: X, y2: Y, stroke: &Stroke<'a>) -> Node<Message> {
 		line_![
 			attrs!{ "x1" => x1 },
 			attrs!{ "x2" => x2 },
@@ -209,7 +208,7 @@ impl Chart {
 		]
 	}
 
-	fn rect<'a>(&self, x: X, y: Y, w: W, h: H, fill: &Fill<'a>) -> El<Message> {
+	fn rect<'a>(&self, x: X, y: Y, w: W, h: H, fill: &Fill<'a>) -> Node<Message> {
 		rect![
 			attrs!{ "x" => x },
 			attrs!{ "y" => y },
@@ -219,7 +218,7 @@ impl Chart {
 		]
 	}
 
-	fn text(&self, t: &str, x: X, y: Y, anchor: &str, colour: &str) -> El<Message> {
+	fn text(&self, t: &str, x: X, y: Y, anchor: &str, colour: &str) -> Node<Message> {
 		text![
 			attrs!{ "x" => x },
 			attrs!{ "y" => y },
@@ -255,7 +254,7 @@ impl Chart {
 		}
 	}
 
-	fn y_axis(&self, dim: &DrawDimensions) -> Fragment {
+	fn y_axis(&self, dim: &DrawDimensions) -> Vec<Node<Message>> {
 		let stk = self.axis_stroke();
 		let gstk = self.grid_stroke();
 		let mut draw = Vec::new();
@@ -271,7 +270,7 @@ impl Chart {
 		draw
 	}
 
-	fn x_axis(&self, dim: &DrawDimensions) -> Fragment {
+	fn x_axis(&self, dim: &DrawDimensions) -> Vec<Node<Message>> {
 		let stk = self.axis_stroke();
 		let gstk = self.grid_stroke();
 		let mut draw = Vec::new();
@@ -289,7 +288,7 @@ impl Chart {
 		draw
 	}
 
-	fn bars(&self, dim: &DrawDimensions) -> Fragment {
+	fn bars(&self, dim: &DrawDimensions) -> Vec<Node<Message>> {
 		let mut draw = Vec::new();
 		let fill = self.bar_fill();
 		for bar in self.bars.iter() {
@@ -300,7 +299,7 @@ impl Chart {
 		draw
 	}
 
-	fn data(&self, dim: &DrawDimensions) -> Fragment {
+	fn data(&self, dim: &DrawDimensions) -> Vec<Node<Message>> {
 		let mut draw = Vec::new();
 		for (index, series) in self.data.iter().enumerate() {
 			let stk = self.data_stroke(index);
@@ -318,7 +317,7 @@ impl Chart {
 		draw
 	}
 
-	pub fn render(&self) -> El<Message> {
+	pub fn render(&self) -> Node<Message> {
 		let dim = self.dimensions();
 		svg![
 			attrs!{ "width" => self.width },
