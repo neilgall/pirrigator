@@ -14,13 +14,22 @@ pub struct IrrigationRow {
     duration: Duration
 }
 
-#[derive(Clone, Debug, Deserialize)]
+type ZoneMoistureData = HashMap<String, TimeSeries<Measurement>>;
+type ZoneIrrigationData = Vec<IrrigationRow>;
+
+#[derive(Clone, Debug)]
+pub enum ZoneData {
+    NotLoaded,
+    Loading,
+    LoadedMoisture { duration: u32, moisture: ZoneMoistureData },
+    LoadedAll { duration: u32, moisture: ZoneMoistureData, irrigation: ZoneIrrigationData }
+}
+
+#[derive(Clone, Debug)]
 pub struct Zone {
     pub name: String,
     pub sensors: Vec<String>,
-    pub duration: u32,
-    pub irrigation: Vec<IrrigationRow>,
-    pub moisture: HashMap<String, TimeSeries<Measurement>>
+    pub data: ZoneData
 }
 
 #[derive(Clone, Debug)]
@@ -72,9 +81,15 @@ impl Zone {
         Zone {
             name: name.to_string(),
             sensors: vec![],
-            duration: 0,
-            irrigation: vec![],
-            moisture: HashMap::new()
+            data: ZoneData::NotLoaded
+        }
+    }
+
+    fn duration(&self) -> u32 {
+        match self.data {
+            ZoneData::LoadedMoisture { duration, moisture: _ } => duration,
+            ZoneData::LoadedAll { duration, moisture: _, irrigation: _ } => duration,
+            _ => 0
         }
     }
 
@@ -92,27 +107,39 @@ impl Zone {
             buttons.iter().map(|(duration, title)|
                 button![
                     title,
-                    style!{ St::Background => if *duration == self.duration {SELECTED} else {UNSELECTED} },
+                    style!{ St::Background => if *duration == self.duration() {SELECTED} else {UNSELECTED} },
                     simple_ev(Ev::Click, Message::FetchMoistureData { zone: self.name.clone(), duration: *duration })
                 ]
             ),
 
             div![
-                if self.moisture.is_empty() {
-                    p!["Select a time range"]
-                } else {
-                    let c = chart::Chart {
-                        width: 600,
-                        height: 200,
-                        y_min: None,
-                        y_max: None,
-                        data: self.moisture.iter().map(chart::Series::from).collect(),
-                        bars: self.irrigation.iter().map(chart::Bar::from).collect()
-                    };
-                    c.render().map_msg(|_| Message::FetchZones)
+                match self.data {
+                    ZoneData::NotLoaded => 
+                        p!["Select a time range"],
+
+                    ZoneData::Loading =>
+                        p!["Loading data..."],
+
+                    ZoneData::LoadedMoisture { duration: _, ref moisture } => 
+                        self.render_chart(&moisture, &vec![]),
+
+                    ZoneData::LoadedAll { duration: _, ref moisture, ref irrigation } =>
+                        self.render_chart(&moisture, &irrigation)
                 }
             ]
         ]
+    }
+
+    fn render_chart(&self, moisture: &ZoneMoistureData, irrigation: &ZoneIrrigationData) -> Node<Message> {
+       let c = chart::Chart {
+            width: 600,
+            height: 200,
+            y_min: None,
+            y_max: None,
+            data: moisture.iter().map(chart::Series::from).collect(),
+            bars: irrigation.iter().map(chart::Bar::from).collect()
+        };
+        c.render().map_msg(|_| Message::FetchZones)
     }
 }
 
@@ -153,19 +180,25 @@ pub fn update(msg: Message, model: &mut Model, orders: &mut impl Orders<Message>
         Message::FetchedZones(zones) => {
             *model = Model::Loaded { zones: zones.iter().map(|name| Zone::new(name)).collect() };
         }
-        Message::FetchMoistureData { zone, duration } => {
-            orders.perform_cmd(fetch_moisture_data(zone, duration));
+        Message::FetchMoistureData { ref zone, duration } => {
+            orders.perform_cmd(fetch_moisture_data(zone.clone(), duration));
+            model.zone(&zone).data = ZoneData::Loading;
         }
         Message::FetchedMoistureData { zone: name, data, duration } => {
             let zone = model.zone(&name);
+            let mut moisture = HashMap::new();
             for (sensor_name, data) in data {
-                zone.moisture.insert(sensor_name, data);
+                moisture.insert(sensor_name, data);
             }
-            zone.duration = duration;
+            zone.data = ZoneData::LoadedMoisture { duration, moisture };
+
             orders.perform_cmd(fetch_irrigation_data(name, duration));
         }
-        Message::FetchedIrrigationData { zone, data } => {
-            model.zone(&zone).irrigation = data;
+        Message::FetchedIrrigationData { zone: name, data } => {
+            let zone = model.zone(&name);
+            if let ZoneData::LoadedMoisture { duration, ref moisture } = zone.data {
+                zone.data = ZoneData::LoadedAll { duration, moisture: moisture.clone(), irrigation: data }
+            }
         }
         Message::Failed(e) => {
             *model = Model::Failed(e);
