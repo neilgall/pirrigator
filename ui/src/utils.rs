@@ -10,6 +10,9 @@ pub const DAY: u32 = 86400;
 pub const DAYS_2: u32 = DAY * 2;
 pub const WEEK: u32 = DAY * 7;
 
+pub const SELECTED: &str = "#666600";
+pub const UNSELECTED: &str = "#333333";
+
 pub fn to_utc(system_time: &SystemTime) -> DateTime<Utc> {
     let unixtime = system_time.duration_since(UNIX_EPOCH).unwrap();
     Utc.timestamp(unixtime.as_secs() as i64, unixtime.subsec_nanos())

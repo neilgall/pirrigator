@@ -20,10 +20,6 @@ enum Message {
     Zones(zones::Message),
 }
 
-fn init(_: Url, _: &mut impl Orders<Message>) -> Pirrigator {
-    Pirrigator::default()
-}
-
 fn update(msg: Message, model: &mut Pirrigator, orders: &mut impl Orders<Message>) {
     match msg {
         Message::Weather(msg) => weather::update(msg, &mut model.weather, &mut orders.proxy(Message::Weather)),
@@ -39,7 +35,16 @@ fn view(model: &Pirrigator) -> Node<Message> {
     ]
 }
 
+fn after_mount(_: Url, orders: &mut impl Orders<Message>) -> AfterMount<Pirrigator> {
+    weather::after_mount(&mut orders.proxy(Message::Weather));
+    zones::after_mount(&mut orders.proxy(Message::Zones));
+    AfterMount::default()
+}
+
+
 #[wasm_bindgen]
 pub fn render() {
-    seed::App::start("app", init, update, view);
+    seed::App::builder(update, view)
+        .after_mount(after_mount)
+        .build_and_start();
 }
