@@ -32,7 +32,7 @@ pub enum Message {
     Failed(JsValue)
 }
 
-fn chart(data: &Vec<WeatherRow>, label: &str, y_min: Option<f64>, f: &Fn(&WeatherRow) -> f64) -> chart::Chart {
+fn chart(data: &Vec<WeatherRow>, label: &str, y_min: Option<f64>, f: &dyn Fn(&WeatherRow) -> f64) -> chart::Chart {
     chart::Chart {
         width: 600,
         height: 200,

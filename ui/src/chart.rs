@@ -122,12 +122,12 @@ struct DrawDimensions {
 	left: X,
 	right: X,
 	min_value: f64,
-	max_value: f64,
+	// max_value: f64,
 	min_time: DateTime<Utc>,
-	max_time: DateTime<Utc>,
+	// max_time: DateTime<Utc>,
 	x_scale: f64,
 	y_scale: f64,
-	y_range: f64
+	// y_range: f64
 }
 
 impl DrawDimensions {
@@ -246,12 +246,12 @@ impl Chart {
 			left,
 			right,
 			min_value,
-			max_value,
+			// max_value,
 			min_time,
-			max_time,
+			// max_time,
 			x_scale,
 			y_scale,
-			y_range,
+			// y_range,
 		}
 	}
 

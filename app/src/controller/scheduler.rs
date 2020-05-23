@@ -116,8 +116,8 @@ struct Pending<'a> {
 }
 
 impl<'a> Pending<'a> {
-	fn new(name: &'a str, time: DateTime<Utc>) -> Self {
-		Pending { name, time }
+	fn new(name: &'a str, time: &DateTime<Utc>) -> Self {
+		Pending { name, time: *time }
 	}
 }
 
@@ -151,7 +151,7 @@ impl Schedule {
 			let times = event.times(&self.location, &now.date());
 			times.iter()
 				.filter(|t| *t > &now)
-				.for_each(|t| events.push(Pending { name: &event.name, time: *t }) );
+				.for_each(|t| events.push(Pending::new(&event.name, t)));
 		}
 		events.sort_by(|x, y| x.time.cmp(&y.time) );
 		events

@@ -7,7 +7,7 @@ mod api;
 mod error;
 mod json;
 mod middleware;
-// mod ui;
+mod ui;
 
 use crate::database::Database;
 use error::bad_request;
@@ -39,7 +39,7 @@ pub fn run(database: Database, zones: &Vec<Zone>) {
 	let mut mount = Mount::new();
 	mount.mount("/api", api::api(zones));
 	// mount.mount("/camera", camera::api());
-	// mount.mount("/", ui::ui());
+	mount.mount("/", ui::ui());
 
 	Iron::new(middleware::insert(mount, database))
 		.http("0.0.0.0:5000")

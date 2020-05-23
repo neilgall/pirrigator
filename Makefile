@@ -1,5 +1,6 @@
-HOST ?= pirrigator-root
 CP = scp
+DEVICE = pirrigator-root
+INSTALL = /home/neil/Projects/home-automation/roles/pirrigator/files/build
 
 all: app
 
@@ -31,15 +32,20 @@ ui-serve: ui-debug
 	cp -f ui/index.html ui/target/html/debug
 	(cd ui/target/html/debug && microserver --port 5000)
 
-app-release:
+app-release: ui-release
 	(cd app && cargo build --target=arm-unknown-linux-gnueabihf --release)
 
-run-locally:
+run-locally: ui-debug
 	(cd app && cargo build && RUST_LOG=debug cargo run)
 
 install: app-release
-	ssh ${HOST} systemctl stop pirrigator
-	${CP} app/Settings.yaml.rpi ${HOST}:/var/lib/pirrigator/Settings.yaml
-	${CP} app/target/arm-unknown-linux-gnueabihf/release/pirrigator ${HOST}:/usr/local/bin/pirrigator
-	ssh ${HOST} systemctl start pirrigator
-	ssh ${HOST} journalctl --no-pager -n 10 -x -u pirrigator
+	mkdir -p ${INSTALL}
+	${CP} app/Settings.yaml.rpi ${INSTALL}/Settings.yaml
+	${CP} app/target/arm-unknown-linux-gnueabihf/release/pirrigator ${INSTALL}/pirrigator
+
+install-to-device: install
+	ssh ${DEVICE} systemctl stop pirrigator
+	${CP} app/Settings.yaml.rpi ${DEVICE}:/var/lib/pirrigator/Settings.yaml
+	${CP} app/target/arm-unknown-linux-gnueabihf/release/pirrigator ${DEVICE}:/usr/local/bin/pirrigator
+	ssh ${DEVICE} systemctl start pirrigator
+
