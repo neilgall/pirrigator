@@ -1,6 +1,7 @@
 CP = scp
 DEVICE = pirrigator-root
 INSTALL = /home/neil/Projects/home-automation/roles/pirrigator/files/build
+RELEASE_TARGET = app/target/arm-unknown-linux-gnueabihf/release/pirrigator
 
 all: app
 
@@ -34,18 +35,19 @@ ui-serve: ui-debug
 
 app-release: ui-release
 	(cd app && cargo build --target=arm-unknown-linux-gnueabihf --release)
+	arm-linux-gnueabihf-strip $(RELEASE_TARGET)
 
 run-locally: ui-release
-	(cd app && cargo build && RUST_LOG=debug cargo run)
+	(cd app && cargo build && RUST_LOG=pirrigator=debug cargo run)
 
 install: app-release
 	mkdir -p ${INSTALL}
 	${CP} app/Settings.yaml.rpi ${INSTALL}/Settings.yaml
-	${CP} app/target/arm-unknown-linux-gnueabihf/release/pirrigator ${INSTALL}/pirrigator
+	${CP} ${RELEASE_TARGET} ${INSTALL}/pirrigator
 
 install-to-device: install
 	ssh ${DEVICE} systemctl stop pirrigator
 	${CP} app/Settings.yaml.rpi ${DEVICE}:/var/lib/pirrigator/Settings.yaml
-	${CP} app/target/arm-unknown-linux-gnueabihf/release/pirrigator ${DEVICE}:/usr/local/bin/pirrigator
+	${CP} ${RELEASE_TARGET} ${DEVICE}:/usr/local/bin/pirrigator
 	ssh ${DEVICE} systemctl start pirrigator
 
