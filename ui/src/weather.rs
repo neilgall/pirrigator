@@ -62,20 +62,20 @@ pub fn render(model: &Model) -> Node<Message> {
         h2!["Weather"],
         buttons.iter().map(|(duration, title)|
             button![
-                style!{ St::Background => if selected == *duration {SELECTED} else {UNSELECTED} },
+                attrs!{At::Class => if selected == *duration {SELECTED} else {UNSELECTED}},
                 simple_ev(Ev::Click, Message::Fetch { duration: *duration }),
                 title
             ]
         ),
         match model {
             Model::NotLoaded =>
-                p!["Select a time range"],
+                p![attrs!{At::Class => "placeholder"}, "Select a time range"],
             Model::Loading { duration: _ } =>
-                p!["Loading..."],
+                p![attrs!{At::Class => "placeholder"}, "Loading..."],
             Model::Failed(e) =>
-                p![e],
+                p![attrs!{At::Class => "placeholder"}, e],
             Model::Loaded { duration: _, data } => {
-                div![
+                div![attrs!{At::Class => "chart"},
                     chart(data, "Temperature", Some(0.0), &|r| r.temperature)
                         .render()
                         .map_msg(|_| Message::Fetch { duration: DAY }),
@@ -112,7 +112,7 @@ pub fn update(msg: Message, model: &mut Model, orders: &mut impl Orders<Message>
 }
 
 pub fn after_mount(orders: &mut impl Orders<Message>) {
-    orders.perform_cmd(fetch_weather(DAY));
+    orders.send_msg(Message::Fetch { duration: DAY });
 }
 
 async fn fetch_weather(duration: u32) -> Message {

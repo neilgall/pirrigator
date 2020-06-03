@@ -10,8 +10,10 @@ pub const DAY: u32 = 86400;
 pub const DAYS_2: u32 = DAY * 2;
 pub const WEEK: u32 = DAY * 7;
 
-pub const SELECTED: &str = "#666600";
-pub const UNSELECTED: &str = "#333333";
+pub const SELECTED: &str = "chosen";
+pub const UNSELECTED: &str = "not-chosen";
+pub const FOREGROUND: &str = "#e7e7e7";
+// pub const BACKGROUND: &str = "#1d1f1f";
 
 pub fn to_utc(system_time: &SystemTime) -> DateTime<Utc> {
     let unixtime = system_time.duration_since(UNIX_EPOCH).unwrap();

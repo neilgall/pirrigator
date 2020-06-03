@@ -1,0 +1,33 @@
+
+body {
+	color: #e7e7e7;
+	background: #1d1f1f;
+}
+
+.chosen {
+	color: #e7e7e7;
+	background: #666600;
+	border: solid 1px #333333;
+}
+
+.not-chosen {
+	color: #e7e7e7;
+	background: #1d1f1f;
+	border: solid 1px #333333;
+}
+
+.placeholder {
+	height: 225px;
+	margin-top: 25px;
+}
+
+.chart {
+	height: 200px;
+	margin-top: 25px;
+}
+
+.zone {
+	margin: 0px;
+	float: left;
+	width: 50%;
+}

@@ -4,6 +4,7 @@ use iron::mime::*;
 use router::Router;
 
 lazy_static_include_bytes!(INDEX, "../ui/index.html");
+lazy_static_include_bytes!(CSS, "../ui/pirrigator.css");
 lazy_static_include_bytes!(START_JS, "../ui/target/html/release/pirrigator-ui.js");
 lazy_static_include_bytes!(WASM, "../ui/target/html/release/pirrigator-ui_bg.wasm");
 
@@ -22,6 +23,15 @@ fn index_html(_: &mut Request) -> IronResult<Response> {
 		vec![(iron::mime::Attr::Charset, iron::mime::Value::Utf8)]
 	);
 	respond(*INDEX, content_type)
+}
+
+fn css(_: &mut Request) -> IronResult<Response> {
+	let content_type = Mime(
+		TopLevel::Text,
+		SubLevel::Css,
+		vec![(iron::mime::Attr::Charset, iron::mime::Value::Utf8)]
+	);
+	respond(*CSS, content_type)
 }
 
 fn javascript(_: &mut Request) -> IronResult<Response> {
@@ -46,6 +56,7 @@ pub fn ui() -> Router {
 	let mut router = Router::new();
 	router.get("/", index_html, "root");
 	router.get("/index.html", index_html, "index.html");
+	router.get("/pirrigator.css", css, "css");
 	router.get("/pirrigator-ui.js", javascript, "start js");
 	router.get("/pirrigator-ui_bg.wasm", wasm, "wasm blob");
 	router			
