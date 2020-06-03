@@ -93,7 +93,7 @@ impl<'a> Default for Stroke<'a> {
 	fn default() -> Self {
 		Stroke {
 			width: 1,
-			stroke: "black",
+			stroke: FOREGROUND,
 			linecap: "square"
 		}
 	}
@@ -180,15 +180,15 @@ impl Chart {
 	}
 
 	fn axis_stroke(&self) -> Stroke {
-		Stroke::new(1, "black", "square")
+		Stroke::new(1, FOREGROUND, "square")
 	}
 
 	fn grid_stroke(&self) -> Stroke {
-		Stroke::new(1, "#cccccc", "square")
+		Stroke::new(1, "#333333", "square")
 	}
 
 	fn data_stroke(&self, index: usize) -> Stroke {
-		let colours = vec!["red", "green", "blue", "orange", "purple"];
+		let colours = vec!["#ff8800", "#00ff88", "#0088ff", "#ff8888", "#ff88ff"];
 		Stroke::new(1, colours[index % colours.len()], "square")
 	}
 
@@ -264,7 +264,7 @@ impl Chart {
 			draw.push(self.line(dim.left-MARK_WIDTH, y, dim.left, y, &stk));
 			draw.push(self.line(dim.left, y, dim.right, y, &gstk));
 			let v = dim.y_value(y);
-			draw.push(self.text(&format!("{:.0}", v), dim.left-MARK_WIDTH-LABEL_GAP_X, y, "end", "black"));
+			draw.push(self.text(&format!("{:.0}", v), dim.left-MARK_WIDTH-LABEL_GAP_X, y, "end", FOREGROUND));
 			y = if y < dim.top + MARK_GAP_Y { dim.top } else { y - MARK_GAP_Y };
 		}
 		draw
@@ -280,8 +280,8 @@ impl Chart {
 			draw.push(self.line(x, dim.bottom+MARK_HEIGHT, x, dim.bottom, &stk));
 			draw.push(self.line(x, dim.top, x, dim.bottom, &gstk));
 			if let Some(t) = dim.x_value(x) {
-				draw.push(self.text(&t.format("%H:%M:%S").to_string(), x, dim.bottom+MARK_HEIGHT+LABEL_GAP_Y, "middle", "black"));
-				draw.push(self.text(&t.format("%b %d").to_string(), x, dim.bottom+MARK_HEIGHT+LABEL_GAP_Y*2, "middle", "black"));
+				draw.push(self.text(&t.format("%H:%M:%S").to_string(), x, dim.bottom+MARK_HEIGHT+LABEL_GAP_Y, "middle", FOREGROUND));
+				draw.push(self.text(&t.format("%b %d").to_string(), x, dim.bottom+MARK_HEIGHT+LABEL_GAP_Y*2, "middle", FOREGROUND));
 			}
 			x += MARK_GAP_X;
 		}
@@ -312,7 +312,7 @@ impl Chart {
 				}
 				prev = Some(Point { x, y });
 			}
-			draw.push(self.text(&series.label, index as X * KEY_LABEL_WIDTH as X, 10, "hanging", stk.stroke))
+			draw.push(self.text(&series.label, dim.left + (index as X * KEY_LABEL_WIDTH as X), 10, "hanging", stk.stroke))
 		}
 		draw
 	}

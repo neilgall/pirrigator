@@ -102,12 +102,14 @@ impl Zone {
         ];
 
         div![
+            attrs![At::Class => "zone"],
+            
             h3![&self.name],
 
             buttons.iter().map(|(duration, title)|
                 button![
                     title,
-                    style!{ St::Background => if *duration == self.duration() {SELECTED} else {UNSELECTED} },
+                    attrs!{At::Class => if *duration == self.duration() {SELECTED} else {UNSELECTED}},
                     simple_ev(Ev::Click, Message::FetchMoistureData { zone: self.name.clone(), duration: *duration })
                 ]
             ),
@@ -115,16 +117,16 @@ impl Zone {
             div![
                 match self.data {
                     ZoneData::NotLoaded => 
-                        p!["Select a time range"],
+                        p![attrs!{At::Class => "placeholder"}, "Select a time range"],
 
                     ZoneData::Loading =>
-                        p!["Loading data..."],
+                        p![attrs!{At::Class => "placeholder"}, "Fetching data..."],
 
                     ZoneData::LoadedMoisture { duration: _, ref moisture } => 
-                        self.render_chart(&moisture, &vec![]),
+                        div![attrs!{At::Class => "chart"}, self.render_chart(&moisture, &vec![])],
 
                     ZoneData::LoadedAll { duration: _, ref moisture, ref irrigation } =>
-                        self.render_chart(&moisture, &irrigation)
+                        div![attrs!{At::Class => "chart"}, self.render_chart(&moisture, &irrigation)]
                 }
             ]
         ]
@@ -158,11 +160,22 @@ pub fn render(model: &Model) -> Node<Message> {
         h2!["Zones"],
         match model {
             Model::NotLoaded => 
-                button![simple_ev(Ev::Click, Message::FetchZones), "Get Zones"],
+                button![
+                    attrs!{At::Class => "placeholder"},
+                    simple_ev(Ev::Click, Message::FetchZones),
+                    "Get Zones"
+                ],
             Model::Loading =>
-                p!["Loading..."],
+                div![
+                    attrs!{At::Class => "placeholder"},
+                    p!["Fetching..."]
+                ],
             Model::Failed(e) =>
-                p![e],
+                div![
+                    attrs!{At::Class => "placeholder"}, 
+                    p![e],
+                    button![simple_ev(Ev::Click, Message::FetchZones), "Try Again"]
+                ],
             Model::Loaded { zones } => {
                 let els: Vec<Node<Message>> = zones.iter().map(|z| z.render()).collect();
                 div![els]
@@ -207,7 +220,7 @@ pub fn update(msg: Message, model: &mut Model, orders: &mut impl Orders<Message>
 }
 
 pub fn after_mount(orders: &mut impl Orders<Message>) {
-    orders.perform_cmd(fetch_zones());
+    orders.send_msg(Message::FetchZones);
 }
 
 async fn fetch_zones() -> Message {
