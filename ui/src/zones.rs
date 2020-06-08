@@ -54,8 +54,10 @@ pub enum Message {
     FetchedZones(Vec<String>),
     FetchMoistureData { zone: String, duration: u32 },
     FetchedMoistureData { zone: String, data: MoistureData, duration: u32 },
+    FetchIrrigationData { zone: String },
     FetchedIrrigationData { zone: String, data: IrrigationData },
-    Failed(String)
+    Failed(String),
+    Irrigate { zone: String }
 }
 
 impl From<&MoistureRow> for chart::DataPoint {
@@ -123,10 +125,18 @@ impl Zone {
                         p![attrs!{At::Class => "placeholder"}, "Fetching data..."],
 
                     ZoneData::LoadedMoisture { duration: _, ref moisture } => 
-                        div![attrs!{At::Class => "chart"}, self.render_chart(&moisture, &vec![])],
+                        div![
+                            attrs!{At::Class => "chart"},
+                            self.render_chart(&moisture, &vec![]),
+                            self.irrigate_button()
+                        ],
 
                     ZoneData::LoadedAll { duration: _, ref moisture, ref irrigation } =>
-                        div![attrs!{At::Class => "chart"}, self.render_chart(&moisture, &irrigation)]
+                        div![
+                            attrs!{At::Class => "chart"},
+                            self.render_chart(&moisture, &irrigation),
+                            self.irrigate_button()
+                        ]
                 }
             ]
         ]
@@ -142,6 +152,13 @@ impl Zone {
             bars: irrigation.iter().map(chart::Bar::from).collect()
         };
         c.render().map_msg(|_| Message::FetchZones)
+    }
+
+    fn irrigate_button(&self) -> Node<Message> {
+        button![
+            "Irrigate Now",
+            simple_ev(Ev::Click, Message::Irrigate { zone: self.name.clone() })
+        ]
     }
 }
 
@@ -205,7 +222,10 @@ pub fn update(msg: Message, model: &mut Model, orders: &mut impl Orders<Message>
             }
             zone.data = ZoneData::LoadedMoisture { duration, moisture };
 
-            orders.perform_cmd(fetch_irrigation_data(name, duration));
+            orders.send_msg(Message::FetchIrrigationData { zone: name.clone() });
+        }
+        Message::FetchIrrigationData { zone } => {
+            orders.perform_cmd(fetch_irrigation_data(zone.clone(), model.zone(&zone).duration()));
         }
         Message::FetchedIrrigationData { zone: name, data } => {
             let zone = model.zone(&name);
@@ -215,6 +235,9 @@ pub fn update(msg: Message, model: &mut Model, orders: &mut impl Orders<Message>
         }
         Message::Failed(e) => {
             *model = Model::Failed(e);
+        },
+        Message::Irrigate { ref zone } => {
+            orders.perform_cmd(irrigate_zone(zone.clone()));
         }
     }
 }
@@ -264,3 +287,16 @@ async fn fetch_irrigation_data(name: String, duration: u32) -> Message {
             )
     }
 }
+
+async fn irrigate_zone(name: String) -> Message {
+    let request = Request::new(format!("/api/zone/{}/irrigate", urlencoding::encode(&name)))
+        .method(Method::Post);
+    match fetch(request).await {
+        Err(e) =>
+            Message::Failed(format!("Faild to irrigate zone {:?}", e)),
+
+        Ok(_) => 
+            Message::FetchIrrigationData { zone: name }
+    }
+}
+
