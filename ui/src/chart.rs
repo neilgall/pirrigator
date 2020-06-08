@@ -193,7 +193,7 @@ impl Chart {
 	}
 
 	fn bar_fill(&self) -> Fill {
-		Fill::new("blue", 0.75)
+		Fill::new("#0088ff", 0.75)
 	}
 
 	fn line<'a>(&self, x1: X, y1: Y, x2: X, y2: Y, stroke: &Stroke<'a>) -> Node<Message> {
