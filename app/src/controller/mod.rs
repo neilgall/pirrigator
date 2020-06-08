@@ -43,7 +43,7 @@ impl Controller {
 
 			match event {
 				Event::ButtonEvent(b) => self.button_event(&b),
-				Event::ScheduleEvent(name) => self.scheduled_event(&name),
+				Event::IrrigateEvent(name) => self.irrigate_zone_event(&name),
 				_ => {}
 			}
 		}
@@ -59,7 +59,7 @@ impl Controller {
 		self.settings.zones.iter().find(|z| z.name == name)
 	}
 
-	fn scheduled_event(&self, name: &str) {
+	fn irrigate_zone_event(&self, name: &str) {
 		match self.zone_by_name(name) {
 			Some(zone) => self.irrigate_if_below_threshold(zone),
 			None => warn!("unknown zone for irrigation: {}", name)

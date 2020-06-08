@@ -29,6 +29,6 @@ pub fn bad_request(msg: &str) -> IronError {
 	IronError::new(ServerError::new(msg), status::BadRequest)
 }
 
-// pub fn internal_error(msg: &str) -> IronError {
-// 	IronError::new(ServerError::new(msg), status::InternalServerError)
-// }
+pub fn internal_error(msg: &str) -> IronError {
+	IronError::new(ServerError::new(msg), status::InternalServerError)
+}

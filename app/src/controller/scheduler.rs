@@ -168,7 +168,7 @@ impl Schedule {
 					while Utc::now() < event.time {
 						sleep(std::time::Duration::from_secs(1));
 					}
-					tx.send(Event::ScheduleEvent(event.name.to_string()))
+					tx.send(Event::IrrigateEvent(event.name.to_string()))
 						.expect("scheduler send error");
 				}
 			}
@@ -270,13 +270,13 @@ mod test {
 		let schedule = Schedule::new(&events, &location);
 		assert_eq!(
 			vec![
-				Pending::new("foo", date.and_hms(8, 0, 0)),
-				Pending::new("bar", date.and_hms(8, 12, 0)),
-				Pending::new("foo", date.and_hms(8, 30, 0)),
-				Pending::new("bar", date.and_hms(8, 32, 0)),
-				Pending::new("bar", date.and_hms(8, 52, 0)),
-				Pending::new("foo", date.and_hms(9, 0, 0)),
-				Pending::new("bar", date.and_hms(9, 12, 0))
+				Pending::new("foo", &date.and_hms(8, 0, 0)),
+				Pending::new("bar", &date.and_hms(8, 12, 0)),
+				Pending::new("foo", &date.and_hms(8, 30, 0)),
+				Pending::new("bar", &date.and_hms(8, 32, 0)),
+				Pending::new("bar", &date.and_hms(8, 52, 0)),
+				Pending::new("foo", &date.and_hms(9, 0, 0)),
+				Pending::new("bar", &date.and_hms(9, 12, 0))
 			],
 			schedule.all_pending(date.and_hms(0, 0, 0))
 		)
@@ -293,7 +293,7 @@ mod test {
 		let schedule = Schedule::new(&events, &location);
 		assert_eq!(
 			vec![
-				Pending::new("bar", date.and_hms(9, 12, 0))
+				Pending::new("bar", &date.and_hms(9, 12, 0))
 			],
 			schedule.all_pending(date.and_hms(9, 1, 0))
 		)

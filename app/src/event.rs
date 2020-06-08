@@ -7,6 +7,6 @@ pub enum Event {
 	WeatherEvent(weather::WeatherEvent),
 	MoistureEvent(moisture::MoistureEvent),
 	ButtonEvent(button::ButtonEvent),
-	ScheduleEvent(String)
+	IrrigateEvent(String)
 }
 

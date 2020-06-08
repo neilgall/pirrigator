@@ -3,18 +3,21 @@ extern crate mount;
 extern crate urlencoding;
 
 mod api;
-// mod camera;
 mod error;
 mod json;
 mod middleware;
 mod ui;
 
 use crate::database::Database;
+use crate::event::Event;
+use crate::server::middleware::PirrigatorData;
+
 use error::bad_request;
 use iron::prelude::*;
 use mount::Mount;
 use router::Router;
 use std::str::FromStr;
+use std::sync::mpsc::Sender;
 use crate::controller::Zone;
 
 fn urldecode(s: &str) -> IronResult<String> {
@@ -35,13 +38,13 @@ pub fn get_param<T: FromStr>(req: &Request, name: &str) -> IronResult<T> {
 		.and_then(parse)
 }
 
-pub fn run(database: Database, zones: &Vec<Zone>) {
+pub fn run(database: Database, zones: &Vec<Zone>, tx: Sender<Event>) {
 	let mut mount = Mount::new();
-	mount.mount("/api", api::api(zones));
-	// mount.mount("/camera", camera::api());
+	mount.mount("/api", api::api());
 	mount.mount("/", ui::ui());
 
-	Iron::new(middleware::insert(mount, database))
+	let data = PirrigatorData::new(database, zones, tx);
+	Iron::new(middleware::insert(mount, data))
 		.http("0.0.0.0:5000")
 		.unwrap();
 }
