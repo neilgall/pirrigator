@@ -10,19 +10,19 @@ use iron::prelude::*;
 use persistent::Read;
 use std::collections::HashMap;
 use std::iter::FromIterator;
-use std::sync::{Arc, Mutex, mpsc::Sender};
+use std::sync::{Mutex, mpsc::Sender};
 
 pub struct PirrigatorData {
 	database: Database,
 	zones: HashMap<String, Zone>,
-	tx: Arc<Mutex<Sender<Event>>>
+	tx: Mutex<Sender<Event>>,
 }
 
 impl PirrigatorData {
 	pub fn new(database: Database, zones: &Vec<Zone>, tx: Sender<Event>) -> PirrigatorData {
 		PirrigatorData {
 			database,
-			tx: Arc::new(Mutex::new(tx)),
+			tx: Mutex::new(tx),
 			zones: HashMap::from_iter(zones.iter().map(|z| (z.name.clone(), z.clone()) ))
 		}
 	}
