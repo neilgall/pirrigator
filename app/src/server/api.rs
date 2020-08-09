@@ -1,7 +1,7 @@
 use iron::prelude::*;
 use iron::status;
 use router::Router;
-use std::error::Error;
+use std::num::ParseIntError;
 use std::time::Duration;
 
 use crate::event::Event;
@@ -13,14 +13,14 @@ use super::get_param;
 use super::json::*;
 
 trait Timestamp {
-	fn timestamp(&self) -> Result<UnixTime, Box<dyn Error>>;
+	fn timestamp(&self, now: UnixTime) -> Result<UnixTime, ParseIntError>;
 }
 
 impl Timestamp for String {
-	fn timestamp(&self) -> Result<UnixTime, Box<dyn Error>> {
+	fn timestamp(&self, now: UnixTime) -> Result<UnixTime, ParseIntError> {
 		if self.chars().next() == Some('-') {
 			let delta = self[1..].parse()?;
-			Ok(UnixTime::now() - Duration::from_secs(delta))
+			Ok(now - Duration::from_secs(delta))
 		} else {
 			let timestamp = self.parse()?;
 			Ok(UnixTime::from_timestamp(timestamp))
@@ -29,12 +29,14 @@ impl Timestamp for String {
 }
 
 fn get_time_period(req: &Request) -> IronResult<TimePeriod> {
+	let now = UnixTime::now();
+
 	let start = get_param::<String>(req, "start")?
-				.timestamp()
+				.timestamp(now)
 				.map_err(|e| bad_request(&format!("cannot parse start time: {}", e.to_string())))?;
 
 	let end = get_param::<String>(req, "end")?
-				.timestamp()
+				.timestamp(now)
 				.map_err(|e| bad_request(&format!("cannot parse end time: {}", e.to_string())))?;
 
 	Ok(TimePeriod { start, end })
@@ -129,4 +131,30 @@ pub fn api() -> Router {
 	router.post("/zone/:zone/irrigate", irrigate_zone, "irrigate zone");
 
 	router
+}
+
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	#[test]
+	fn test_parse_absolute_timestamp() {
+		let parsed = String::from("1234567").timestamp(UnixTime::now()).unwrap();
+		assert_eq!(UnixTime::from_timestamp(1234567), parsed);
+	}
+
+	#[test]
+	fn test_parse_relative_timestamp_nonzero() {
+		let now = UnixTime::now();
+		let parsed = String::from("-1234").timestamp(now).unwrap();
+		assert_eq!(now - Duration::from_secs(1234), parsed);
+	}
+
+	#[test]
+	fn test_parse_relative_timestamp_zero() {
+		let now = UnixTime::now();
+		let parsed = String::from("-0").timestamp(now).unwrap();
+		assert_eq!(now, parsed);
+	}
 }
