@@ -6,7 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const HOUR: u32 = 3600;
 pub const HOURS_6: u32 = HOUR * 6;
-pub const DAY: u32 = 86400;
+pub const DAY: u32 = HOUR * 24;
 pub const DAYS_2: u32 = DAY * 2;
 pub const WEEK: u32 = DAY * 7;
 

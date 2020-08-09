@@ -168,9 +168,9 @@ const KEY_LABEL_WIDTH: W = 180;
 
 impl Chart {
 	fn value_range(&self) -> (f64, f64) {
-		let min = self.y_min.unwrap_or(self.data.iter().map(|s| s.min_value()).min_value());
-		let max = self.y_max.unwrap_or(self.data.iter().map(|s| s.max_value()).max_value());
-		(min, max + (max - min) * 0.1)
+		let min = self.y_min.unwrap_or(self.data.iter().map(|s| s.min_value()).min_value() * 0.9);
+		let max = self.y_max.unwrap_or(self.data.iter().map(|s| s.max_value()).max_value() * 1.1);
+		(min, max)
 	}
 
 	fn time_range(&self) -> (DateTime<Utc>, DateTime<Utc>) {
@@ -276,11 +276,11 @@ impl Chart {
 		let mut draw = Vec::new();
 		draw.push(self.line(dim.left, dim.bottom, dim.right, dim.bottom, &stk));
 		let mut x = dim.left + MARK_GAP_Y;
-		while x < dim.right {
+		while x <= dim.right {
 			draw.push(self.line(x, dim.bottom+MARK_HEIGHT, x, dim.bottom, &stk));
 			draw.push(self.line(x, dim.top, x, dim.bottom, &gstk));
 			if let Some(t) = dim.x_value(x) {
-				draw.push(self.text(&t.format("%H:%M:%S").to_string(), x, dim.bottom+MARK_HEIGHT+LABEL_GAP_Y, "middle", FOREGROUND));
+				draw.push(self.text(&t.format("%H:%M").to_string(), x, dim.bottom+MARK_HEIGHT+LABEL_GAP_Y, "middle", FOREGROUND));
 				draw.push(self.text(&t.format("%b %d").to_string(), x, dim.bottom+MARK_HEIGHT+LABEL_GAP_Y*2, "middle", FOREGROUND));
 			}
 			x += MARK_GAP_X;

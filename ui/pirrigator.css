@@ -17,17 +17,25 @@ body {
 }
 
 .placeholder {
-	height: 225px;
+	min-height: 225px;
 	margin-top: 25px;
 }
 
 .chart {
-	height: 200px;
+	min-height: 225px;
 	margin-top: 25px;
+}
+
+.zones: {
 }
 
 .zone {
 	margin: 0px;
 	float: left;
-	width: 50%;
+	min-width: 50%;
+	min-height: 300px;
+}
+
+.irrigate {
+	margin-left: 20px;
 }

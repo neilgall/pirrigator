@@ -116,6 +116,8 @@ impl Zone {
                 ]
             ),
 
+            self.irrigate_button(),
+
             div![
                 match self.data {
                     ZoneData::NotLoaded => 
@@ -134,8 +136,7 @@ impl Zone {
                     ZoneData::LoadedAll { duration: _, ref moisture, ref irrigation } =>
                         div![
                             attrs!{At::Class => "chart"},
-                            self.render_chart(&moisture, &irrigation),
-                            self.irrigate_button()
+                            self.render_chart(&moisture, &irrigation)
                         ]
                 }
             ]
@@ -156,8 +157,9 @@ impl Zone {
 
     fn irrigate_button(&self) -> Node<Message> {
         button![
-            "Irrigate Now",
-            simple_ev(Ev::Click, Message::Irrigate { zone: self.name.clone() })
+            attrs!{At::Class => "irrigate"},
+            simple_ev(Ev::Click, Message::Irrigate { zone: self.name.clone() }),
+            "Irrigate Now"
         ]
     }
 }
@@ -195,7 +197,10 @@ pub fn render(model: &Model) -> Node<Message> {
                 ],
             Model::Loaded { zones } => {
                 let els: Vec<Node<Message>> = zones.iter().map(|z| z.render()).collect();
-                div![els]
+                div![
+                    attrs!{At::Class => "zones"},
+                    els
+                ]
             }
         }
     ]
@@ -209,6 +214,9 @@ pub fn update(msg: Message, model: &mut Model, orders: &mut impl Orders<Message>
         }   
         Message::FetchedZones(zones) => {
             *model = Model::Loaded { zones: zones.iter().map(|name| Zone::new(name)).collect() };
+            for zone in zones.iter() {
+                orders.send_msg(Message::FetchMoistureData { zone: zone.clone(), duration: HOURS_6 });
+            }
         }
         Message::FetchMoistureData { ref zone, duration } => {
             orders.perform_cmd(fetch_moisture_data(zone.clone(), duration));
