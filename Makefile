@@ -8,11 +8,18 @@ UI_BUILD_DIR = ui/target/html/release
 INSTALL_UI = ${INSTALL_ROOT}/pirrigator_ui/files
 
 
+.PHONY: all
 all: app
 
+.PHONY: test
 test:
 	(cd app && cargo test)
 	(cd ui && cargo test)
+
+.PHONY: clean
+clean:
+	(cd ui && cargo clean)
+	(cd app && cargo clean)
 
 ui-release:
 	(cd ui && \

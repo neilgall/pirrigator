@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 common = { path = "../common" }
-chrono = "0.4.11"
+chrono = "0.4.19"
 seed = "^0.7.0"
 serde = "^1.0.110"
 serde_derive = "^1.0.110"

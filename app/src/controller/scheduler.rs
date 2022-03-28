@@ -168,7 +168,7 @@ impl Schedule {
 					while Utc::now() < event.time {
 						sleep(std::time::Duration::from_secs(1));
 					}
-					tx.send(Event::IrrigateEvent(event.name.to_string()))
+					tx.send(Event::ConditionalIrrigateEvent(event.name.to_string()))
 						.expect("scheduler send error");
 				}
 			}

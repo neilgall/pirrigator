@@ -43,6 +43,7 @@ impl Controller {
 
 			match event {
 				Event::ButtonEvent(b) => self.button_event(&b),
+				Event::ConditionalIrrigateEvent(name) => self.conditionally_irrigate_zone_event(&name),
 				Event::IrrigateEvent(name) => self.irrigate_zone_event(&name),
 				_ => {}
 			}
@@ -61,8 +62,15 @@ impl Controller {
 
 	fn irrigate_zone_event(&self, name: &str) {
 		match self.zone_by_name(name) {
-			Some(zone) => self.irrigate_if_below_threshold(zone),
+			Some(zone) => self.valves.irrigate(&zone.valve, zone.irrigate_duration()),
 			None => warn!("unknown zone for irrigation: {}", name)
+		}
+	}
+
+	fn conditionally_irrigate_zone_event(&self, name: &str) {
+		match self.zone_by_name(name) {
+			Some(zone) => self.irrigate_if_below_threshold(zone),
+			None => warn!("unknown zone for conditional irrigation: {}", name)
 		}
 	}
 
