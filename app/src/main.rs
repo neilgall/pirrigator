@@ -18,5 +18,5 @@ fn main() {
 	let p = Pirrigator::new(s)
 		.expect("Failed to start Pirrigator");
 
-	p.run_server();
+	p.run();
 }

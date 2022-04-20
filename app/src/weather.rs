@@ -1,7 +1,8 @@
 use bme280::{Bme280Device, Bme280Data};
 use std::error::Error;
 use std::sync::mpsc::Sender;
-use std::thread::{JoinHandle, spawn, sleep};
+use std::thread;
+use std::thread::{JoinHandle, sleep};
 use std::time::Duration;
 use crate::event::Event;
 
@@ -34,7 +35,7 @@ fn main(mut device: Bme280Device, channel: Sender<Event>, period: Duration) {
 			Ok(data) => send_event(data, &channel),
 			Err(e) => error!("ERROR! reading WeatherSensor: {}", e)
 		};
-		sleep(period);
+		thread::park_timeout(period);
 	}
 }
 
@@ -56,7 +57,9 @@ impl WeatherSensor {
 	pub fn new(settings: &WeatherSensorSettings, channel: Sender<Event>) -> Result<Self, Box<dyn Error>> {
 		let device = Bme280Device::new(&settings.device, settings.address)?;
 		let period = Duration::from_secs(settings.update);
-		let thread = spawn(move || { main(device, channel, period) });
+		let thread = thread::Builder::new()
+			.name("weather".to_string())
+			.spawn(move || { main(device, channel, period) })?;
 		Ok(WeatherSensor { 
 			thread: Some(thread)
 		})

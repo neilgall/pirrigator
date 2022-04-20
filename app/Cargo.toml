@@ -11,23 +11,11 @@ common = { path = "../common" }
 chrono = "0.4.11"
 config = "0.10.1"
 env_logger = "0.7.1"
-iron = "0.6.1"
-iron-json-response = "0.6.0"
-lazy_static = "1.4.0"
-lazy-static-include = "2.2.2"
 log = "0.4.8"
-logger = "0.4.0"
-mount = "0.4.0"
-persistent = "0.4.0"
-r2d2 = "0.8.8"
-r2d2_sqlite = "0.16.0"
-router = "0.6.0"
-rusqlite = "0.23.1"
 rustpi_io = "0.1.0"
 serde = "^1.0.110"
 serde_derive = "^1.0.110"
 sunrise = "1.0.0"
-urlencoding = "1.0.0"
 
 [profile.release]
 lto = true

@@ -1,14 +1,14 @@
 use std::error::Error;
 use std::path::Path;
 use std::sync::mpsc;
-use std::thread::{JoinHandle, spawn};
+use std::thread::{JoinHandle, sleep, spawn};
+use std::time::Duration;
 
 use crate::button::Buttons;
 use crate::controller::{Controller, Scheduler};
 use crate::database::Database;
 use crate::event::Event;
 use crate::moisture::MoistureSensor;
-use crate::server;
 use crate::settings::Settings;
 use crate::valve::Valves;
 use crate::weather::WeatherSensor;
@@ -22,9 +22,7 @@ fn traverse<T, U, E>(t: &Option<T>, f: &dyn Fn(&T) -> Result<U, E>) -> Result<Op
 }
 
 pub struct Pirrigator {
-	settings: Settings,
 	thread: Option<JoinHandle<()>>,
-	database: Database,
 	tx: mpsc::Sender<Event>
 }
 
@@ -64,14 +62,14 @@ impl Pirrigator {
 		let thread = spawn(move || controller.run(rx));
 
 		return Ok(Pirrigator { 
-			settings: s,
 			thread: Some(thread),
-			database: db,
 			tx
 		})
 	}
 
-	pub fn run_server(&self) {
-		server::run(self.database.clone(), &self.settings.controller.zones, self.tx.clone());
+	pub fn run(&self) {
+		loop {
+			sleep(Duration::MAX);
+		}
 	}
 }

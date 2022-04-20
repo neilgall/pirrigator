@@ -1,5 +1,6 @@
 use std::error::Error;
-use std::thread::{JoinHandle, spawn, sleep};
+use std::thread;
+use std::thread::{JoinHandle, sleep};
 use std::time::{Duration, SystemTime};
 use std::str::FromStr;
 use std::sync::mpsc::Sender;
@@ -139,6 +140,7 @@ fn report(samples: Vec<Sample>, channel: &Sender<Event>) {
 }
 
 fn main(mcp: MCPDevice, enable: GPIO, settings: Vec<MoistureSensorSettings>, channel: Sender<Event>, period: Duration) {
+	info!("Starting {} moisture sensor(s)", settings.len());
 	let shared_mcp = mcp.share();
 	let sensors: Vec<Sensor> = settings.iter()
 		.map(|sensor| Sensor::new(shared_mcp.clone(), &sensor).unwrap())
@@ -173,8 +175,9 @@ impl MoistureSensor {
 
 		let period = Duration::from_secs(adc.update);
 		let sensors = sensors.to_vec();
-		let thread = spawn(move || { main(mcp, enable, sensors, channel, period); });
-
+		let thread = thread::Builder::new()
+			.name("moisture".to_string())
+			.spawn(move || { main(mcp, enable, sensors, channel, period); })?;
 		Ok(MoistureSensor { 
 			thread: Some(thread)
 		})
