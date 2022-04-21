@@ -1,4 +1,3 @@
-use std::time::SystemTime;
 use crate::time::UnixTime;
 
 pub type Measurement = u16;

@@ -81,30 +81,3 @@ impl<'de> Deserialize<'de> for UnixTime {
 		deserializer.deserialize_u32(UnixTimeVisitor)
 	}
 }
-
-pub type TimeSeries<T> = Vec<(UnixTime, T)>;
-
-
-pub struct TimePeriod {
-	pub start: UnixTime,
-	pub end: UnixTime
-}
-
-impl TimePeriod {
-	pub fn start_seconds(&self) -> u32 {
-		self.start.timestamp()
-	}
-
-	pub fn end_seconds(&self) -> u32 {
-		self.end.timestamp()
-	}
-
-	pub fn last_hour() -> TimePeriod {
-		let now = UnixTime::now();
-		TimePeriod {
-			start: now - Duration::from_secs(3600),
-			end: now
-		}
-	}
-}
-
