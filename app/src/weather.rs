@@ -2,7 +2,7 @@ use bme280::{Bme280Device, Bme280Data};
 use std::error::Error;
 use std::sync::mpsc::Sender;
 use std::thread;
-use std::thread::{JoinHandle, sleep};
+use std::thread::{JoinHandle};
 use std::time::{Duration, SystemTime};
 
 use crate::event::Event;

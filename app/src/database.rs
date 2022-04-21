@@ -1,18 +1,18 @@
 
 use std::error::Error;
-use std::path::Path;
 
 use crate::event::Event;
 use crate::time::*;
 
 use crate::moisture;
+use crate::settings::DatabaseSettings;
 use crate::weather;
 
 pub struct Database {
 }
 
 impl Database {
-	pub fn new(path: &Path) -> Result<Self, Box<dyn Error>> {
+	pub fn new(settings: &DatabaseSettings) -> Result<Self, Box<dyn Error>> {
 		Ok(Database {})
 	}
 

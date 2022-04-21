@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::path::Path;
 use std::sync::mpsc;
 use std::thread::{JoinHandle, sleep, spawn};
 use std::time::Duration;
@@ -37,17 +36,27 @@ impl Drop for Pirrigator {
 impl Pirrigator {
 	pub fn new(s: Settings) -> Result<Pirrigator, Box<dyn Error>> {
 		let (tx, rx) = mpsc::channel();
-		let db = Database::new(Path::new(&s.database.path))?;
+		let db = Database::new(&s.database)?;
 
-		let weather = traverse(&s.weather, &|w| WeatherSensor::new(&w, tx.clone()))?;
+		let weather = traverse(
+			&s.weather,
+			&|w| WeatherSensor::new(&w, tx.clone())
+		)?;
 
-		let moisture = traverse(&s.adc, &|adc| MoistureSensor::new(&adc, &s.moisture, tx.clone()))?;
+		let moisture = traverse(
+			&s.adc,
+			&|adc| MoistureSensor::new(&adc, &s.moisture, tx.clone())
+		)?;
 
 		let buttons = Buttons::new(&s.buttons, tx.clone())?;
 		
 		let valves = Valves::new(&s.valves, db.clone())?;
 
-		let scheduler = Scheduler::new(&s.controller.location, &s.controller.zones, tx.clone())?;
+		let scheduler = Scheduler::new(
+			&s.controller.location,
+			&s.controller.zones,
+			tx.clone()
+		)?;
 
 		let mut controller = Controller {
 			settings: s.controller.clone(),
