@@ -1,16 +1,17 @@
 use std::error::Error;
 use std::thread;
 use std::thread::{JoinHandle, sleep};
-use std::time::{Duration, SystemTime};
 use std::str::FromStr;
 use std::sync::mpsc::Sender;
+use std::time::{SystemTime, Duration};
+
+use chrono::Utc;
 use mcp3xxx::{AnalogIn, MCPDevice, SharedMCPDevice};
 use rustpi_io::gpio::*;
 
 use crate::event::Event;
 use crate::event::moisture::{Measurement, MoistureEvent};
 use crate::settings::{ADCSettings, MoistureSensorSettings};
-use crate::time::UnixTime;
 
 const CALIBRATED_WET: Measurement = 100;
 const CALIBRATED_DRY: Measurement = 0;
@@ -140,7 +141,7 @@ fn main(mcp: MCPDevice, enable: GPIO, settings: Vec<MoistureSensorSettings>, cha
 
 fn send_event(sensor: &Sensor, value: u16, channel: &Sender<Event>) {
 	let event = MoistureEvent { 
-		unix_time: UnixTime::now(),
+		time: Utc::now(),
 		name: sensor.name.clone(),
 		value
 	};

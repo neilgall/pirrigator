@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use std::error::Error;
 use influxdb::Client;
 
@@ -6,7 +7,6 @@ use crate::event::button::ButtonEvent;
 use crate::event::weather::WeatherEvent;
 use crate::event::moisture::{Measurement, MoistureEvent};
 use crate::settings::DatabaseSettings;
-use crate::time::*;
 
 pub struct Database {
 	client: Client
@@ -16,7 +16,8 @@ pub type DbResult<T> = Result<T, Box<dyn Error>>;
 
 impl Database {
 	pub fn new(settings: &DatabaseSettings) -> DbResult<Self> {
-		let client = Client::new(&settings.url, &settings.database);
+		let client = Client::new(&settings.url, &settings.database)
+			.with_auth(&settings.username, &settings.password);
 
 		Ok(Database {
 			client
@@ -51,7 +52,7 @@ impl Database {
 		Ok(())
 	}
 
-	pub fn store_irrigation(&self, valve: &str, start: UnixTime, end: UnixTime) -> DbResult<()> {
+	pub fn store_irrigation(&self, valve: &str, start: DateTime<Utc>, end: DateTime<Utc>) -> DbResult<()> {
 		Ok(())
 	}
 

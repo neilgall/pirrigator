@@ -1,17 +1,11 @@
-use crate::time::UnixTime;
+use chrono::{DateTime, Utc};
 
 pub type Measurement = u16;
 
 #[derive(Debug)]
 pub struct MoistureEvent {
-	pub unix_time: UnixTime,
+	pub time: DateTime<Utc>,
 	pub name: String,
 	pub value: Measurement
-}
-
-impl MoistureEvent {
-	pub fn timestamp(&self) -> u32 {
-		self.unix_time.timestamp()
-	}
 }
 

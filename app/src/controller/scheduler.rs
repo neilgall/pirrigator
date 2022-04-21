@@ -1,6 +1,3 @@
-extern crate chrono;
-extern crate sunrise;
-
 use chrono::prelude::*;
 use chrono::Duration;
 use std::error::Error;

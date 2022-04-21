@@ -4,10 +4,10 @@ use std::sync::mpsc::Sender;
 use std::thread;
 use std::thread::{JoinHandle};
 use std::time::Duration;
+use chrono::Utc;
 
 use crate::event::{Event, weather::WeatherEvent};
 use crate::settings::WeatherSensorSettings;
-use crate::time::UnixTime;
 
 pub struct WeatherSensor {
 	thread: Option<JoinHandle<()>>
@@ -34,7 +34,7 @@ fn main(mut device: Bme280Device, channel: Sender<Event>, period: Duration) {
 
 fn send_event(data: Bme280Data, channel: &Sender<Event>) {
 	let event = WeatherEvent {
-		unix_time: UnixTime::now(),
+		time: Utc::now(),
 		temperature: data.temperature,
 		humidity: data.humidity,
 		pressure: data.pressure

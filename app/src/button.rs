@@ -1,13 +1,14 @@
 extern crate rustpi_io;
 
 use rustpi_io::gpio::*;
+use chrono::Utc;
 
 use std::error::Error;
 use std::sync::mpsc::Sender;
 use std::thread::{JoinHandle, spawn, sleep};
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
-use crate::event::{Event, button::ButtonEvent, button::Transition};
+use crate::event::{Event, button::ButtonEvent};
 use crate::settings::ButtonSettings;
 
 pub struct Buttons {
@@ -45,7 +46,7 @@ impl Button {
 	}
 }
 
-fn read_all<'a>(buttons: &'a Vec<Button>) -> Vec<(&'a Button, bool)> {
+fn read_all(buttons: &Vec<Button>) -> Vec<(&Button, bool)> {
 	buttons.iter().map(|b| (b, b.read())).collect()
 }
 
@@ -70,9 +71,9 @@ fn main(buttons: Vec<Button>, channel: Sender<Event>) {
 
 fn send_event(button: &(&Button, bool), channel: &Sender<Event>) {
 	let event = ButtonEvent {
-		timestamp: SystemTime::now(),
+		time: Utc::now(),
 		name: button.0.name.clone(),
-		transition: Transition::from(button.1)
+		state: !button.1 // default is active high
 	};
 
 	 match channel.send(Event::ButtonEvent(event)) {

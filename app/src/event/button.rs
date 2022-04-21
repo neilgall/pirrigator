@@ -1,25 +1,9 @@
-use std::time::SystemTime;
+use influxdb::InfluxDbWriteable;
+use chrono::{DateTime, Utc};
 
-#[derive(Debug)]
-pub enum Transition {
-	Pressed,
-	Released
-}
-
-impl From<bool> for Transition {
-	fn from(b: bool) -> Self {
-		// default is active high
-		if b {
-			Transition::Released
-		} else {
-			Transition::Pressed
-		}
-	}
-}
-
-#[derive(Debug)]
+#[derive(Debug, InfluxDbWriteable)]
 pub struct ButtonEvent {
-	pub timestamp: SystemTime,
+	pub time: DateTime<Utc>,
 	pub name: String,
-	pub transition: Transition
+	pub state: bool
 }

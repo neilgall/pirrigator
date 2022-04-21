@@ -1,25 +1,14 @@
-use std::time::SystemTime;
-use crate::time::UnixTime;
+use influxdb::InfluxDbWriteable;
+use chrono::{DateTime, Utc};
 
 pub type Temperature = f64;
 pub type Humidity = f64;
 pub type Pressure = f64;
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, InfluxDbWriteable)]
 pub struct WeatherEvent {
-	pub unix_time: UnixTime,
+	pub time: DateTime<Utc>,
 	pub temperature: Temperature,
 	pub humidity: Humidity,
 	pub pressure: Pressure
 }
-
-impl WeatherEvent {
-	pub fn timestamp(&self) -> u32 {
-		self.unix_time.timestamp()
-	}
-
-	pub fn system_time(&self) -> SystemTime {
-		self.unix_time.system_time()
-	}
-}
-

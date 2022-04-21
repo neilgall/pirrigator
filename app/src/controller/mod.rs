@@ -6,7 +6,7 @@ use std::time::Duration;
 use crate::button::Buttons;
 use crate::database::Database;
 use crate::event::Event;
-use crate::event::button::{ButtonEvent, Transition};
+use crate::event::button::ButtonEvent;
 use crate::moisture::MoistureSensor;
 use crate::settings::controller::{ControllerSettings, Zone};
 use crate::valve::Valves;
@@ -51,12 +51,12 @@ impl Controller {
 	}
 
 	fn button_event(&mut self, b: &ButtonEvent) {
-		if let Transition::Released = b.transition {
+		if !b.state {
 			self.settings.zones.iter().for_each(|ref zone| self.irrigate_if_below_threshold(zone));
 		}
 	}
 
-	fn zone_by_name<'a>(&'a self, name: &str) -> Option<&'a Zone> {
+	fn zone_by_name(&self, name: &str) -> Option<&Zone> {
 		self.settings.zones.iter().find(|z| z.name == name)
 	}
 
