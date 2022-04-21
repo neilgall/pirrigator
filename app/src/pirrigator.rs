@@ -6,7 +6,6 @@ use std::time::Duration;
 use crate::button::Buttons;
 use crate::controller::{Controller, Scheduler};
 use crate::database::Database;
-use crate::event::Event;
 use crate::moisture::MoistureSensor;
 use crate::settings::Settings;
 use crate::valve::Valves;
@@ -21,8 +20,7 @@ fn traverse<T, U, E>(t: &Option<T>, f: &dyn Fn(&T) -> Result<U, E>) -> Result<Op
 }
 
 pub struct Pirrigator {
-	thread: Option<JoinHandle<()>>,
-	tx: mpsc::Sender<Event>
+	thread: Option<JoinHandle<()>>
 }
 
 impl Drop for Pirrigator {
@@ -50,7 +48,7 @@ impl Pirrigator {
 
 		let buttons = Buttons::new(&s.buttons, tx.clone())?;
 		
-		let valves = Valves::new(&s.valves, db.clone())?;
+		let valves = Valves::new(&s.valves, tx.clone())?;
 
 		let scheduler = Scheduler::new(
 			&s.controller.location,
@@ -71,8 +69,7 @@ impl Pirrigator {
 		let thread = spawn(move || controller.run(rx));
 
 		return Ok(Pirrigator { 
-			thread: Some(thread),
-			tx
+			thread: Some(thread)
 		})
 	}
 

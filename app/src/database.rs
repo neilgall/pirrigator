@@ -4,6 +4,7 @@ use influxdb::Client;
 
 use crate::event::Event;
 use crate::event::button::ButtonEvent;
+use crate::event::irrigate::IrrigatedEvent;
 use crate::event::weather::WeatherEvent;
 use crate::event::moisture::{Measurement, MoistureEvent};
 use crate::settings::DatabaseSettings;
@@ -30,29 +31,30 @@ impl Database {
 		}
 	}
 
-	pub fn store_event(&self, event: &Event) -> DbResult<()> {
+	pub fn store_event(&mut self, event: &Event) -> DbResult<()> {
 		match event {
 			Event::ButtonEvent(b) => self.store_button(b),
 			Event::WeatherEvent(w) => self.store_weather(w),
 			Event::MoistureEvent(m) => self.store_moisture(m),
+			Event::IrrigatedEvent(i) => self.store_irrigated(i),
 			_ => Ok(())
 		}?;
 		Ok(())
 	}
 
-	fn store_button(&self, event: &ButtonEvent) -> DbResult<()> {
+	fn store_button(&mut self, event: &ButtonEvent) -> DbResult<()> {
 		Ok(())
 	}
 
-	fn store_weather(&self, event: &WeatherEvent) -> DbResult<()> {
+	fn store_weather(&mut self, event: &WeatherEvent) -> DbResult<()> {
 		Ok(())
 	}
 
-	fn store_moisture(&self, event: &MoistureEvent) -> DbResult<()> {
+	fn store_moisture(&mut self, event: &MoistureEvent) -> DbResult<()> {
 		Ok(())
 	}
 
-	pub fn store_irrigation(&self, valve: &str, start: DateTime<Utc>, end: DateTime<Utc>) -> DbResult<()> {
+	pub fn store_irrigated(&mut self, event: &IrrigatedEvent) -> DbResult<()> {
 		Ok(())
 	}
 

@@ -6,7 +6,7 @@ use std::sync::mpsc;
 use std::thread::{JoinHandle, sleep, spawn};
 use std::time::Duration;
 
-use crate::database::Database;
+use crate::event::{Event, irrigate::IrrigatedEvent};
 use crate::settings::ValveSettings;
 
 const SECONDS_BETWEEN_EVENTS: u64 = 5;
@@ -63,14 +63,17 @@ impl Valve {
 		Ok(())
 	}
 
-	fn irrigate_event(&mut self, duration: Duration, database: &Database) -> Result<(), Box<dyn Error>> {
+	fn irrigate_event(&mut self, duration: Duration) -> Result<IrrigatedEvent, Box<dyn Error>> {
 		self.open()?;
 		let opened = Utc::now();
 		sleep(duration);
 		self.close()?;
-		database.store_irrigation(&self.name, opened, Utc::now())?;
-		sleep(Duration::from_secs(SECONDS_BETWEEN_EVENTS));
-		Ok(())
+
+		Ok(IrrigatedEvent {
+			time: opened,
+			name: self.name.clone(),
+			seconds: duration.as_secs() as u32
+		})
 	}
 }
 
@@ -80,18 +83,25 @@ impl Drop for Valve {
 	}
 }
 
-fn main(rx: mpsc::Receiver<Command>, mut valves: Vec<Valve>, database: Database) {
+fn irrigate(valve: &mut Valve, duration: Duration, tx: &mpsc::Sender<Event>) {
+	valve.irrigate_event(duration).into_iter().for_each(
+		|event| tx.send(Event::IrrigatedEvent(event)).unwrap()
+	);
+	sleep(Duration::from_secs(SECONDS_BETWEEN_EVENTS))
+}
+
+fn main(rx: mpsc::Receiver<Command>, event_tx: mpsc::Sender<Event>, mut valves: Vec<Valve>) {
 	loop {
 		let command = rx.recv().unwrap();
 		match command {
 			Command::IrrigateAll { duration } => {
-				for valve in &mut valves {
-					valve.irrigate_event(duration, &database).unwrap();
+				for mut valve in &mut valves {
+					irrigate(&mut valve, duration, &event_tx);
 				}
 			},
 			Command::Irrigate { name, duration } => {
 				match valves.iter_mut().find(|ref v| v.name == name) {
-					Some(valve) => valve.irrigate_event(duration, &database).unwrap(),
+					Some(valve) => irrigate(valve, duration, &event_tx),
 					None => warn!("no such valve {}", name)
 				}
 			}
@@ -113,20 +123,20 @@ impl Drop for Valves {
 }
 
 impl Valves {
-	pub fn new(settings: &Vec<ValveSettings>, database: Database) -> Result<Self, Box<dyn Error>> {
+	pub fn new(settings: &Vec<ValveSettings>, event_tx: mpsc::Sender<Event>) -> Result<Self, Box<dyn Error>> {
 		let valves: Vec<Valve> = settings.iter()
 			.map(|v| Valve::new(v).unwrap())
 			.collect();
 
-		let (tx, rx) = mpsc::channel();
+		let (command_tx, command_rx) = mpsc::channel();
 
 		info!("Initialised {} valve(s)", valves.len());
 
-		let thread = spawn(move || main(rx, valves, database));
+		let thread = spawn(move || main(command_rx, event_tx, valves));
 
 		Ok(Valves { 
 			thread: Some(thread),
-			tx
+			tx: command_tx
 		})
 	}
 

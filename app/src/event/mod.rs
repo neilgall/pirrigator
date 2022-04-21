@@ -1,4 +1,5 @@
 pub mod button;
+pub mod irrigate;
 pub mod moisture;
 pub mod weather;
 
@@ -8,6 +9,7 @@ pub enum Event {
 	MoistureEvent(moisture::MoistureEvent),
 	ButtonEvent(button::ButtonEvent),
 	ConditionalIrrigateEvent(String),
-	IrrigateEvent(String)
+	IrrigateEvent(String),
+	IrrigatedEvent(irrigate::IrrigatedEvent)
 }
 
