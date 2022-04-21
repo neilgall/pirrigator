@@ -10,7 +10,7 @@ use std::sync::mpsc::Sender;
 use std::thread::{JoinHandle, sleep, spawn};
 
 use crate::event::Event;
-use super::settings::{Location, Zone};
+use crate::settings::controller::{Location, Zone};
 
 #[derive(Debug)]
 pub struct ParseError {

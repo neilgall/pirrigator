@@ -7,12 +7,7 @@ use std::sync::mpsc::Sender;
 use std::thread::{JoinHandle, spawn, sleep};
 use std::time::{Duration, SystemTime};
 use crate::event::Event;
-
-#[derive(Debug, Deserialize, PartialEq, Eq)]
-pub struct ButtonSettings {
-	pub name: String,
-	pub gpio: u8
-}
+use crate::settings::ButtonSettings;
 
 pub struct Buttons {
 	thread: Option<JoinHandle<()>>

@@ -1,5 +1,4 @@
 mod scheduler;
-mod settings;
 
 use std::sync::mpsc;
 use std::time::Duration;
@@ -8,11 +7,11 @@ use crate::button::{Buttons, ButtonEvent, Transition};
 use crate::database::Database;
 use crate::event::Event;
 use crate::moisture::MoistureSensor;
+use crate::settings::controller::{ControllerSettings, Zone};
 use crate::valve::Valves;
 use crate::weather::WeatherSensor;
 
 pub use scheduler::Scheduler;
-pub use settings::{ControllerSettings, Zone};
 
 impl Zone {
 	fn irrigate_duration(&self) -> Duration {

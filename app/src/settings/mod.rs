@@ -1,22 +1,29 @@
 extern crate config;
 extern crate serde;
 
-use config::{Config, ConfigError, File, FileFormat};
+pub mod controller;
 
-use crate::button::{ButtonSettings};
-use crate::controller::ControllerSettings;
+use config::{Config, ConfigError, File, FileFormat};
+use controller::ControllerSettings;
+
 use crate::weather::WeatherSensorSettings;
 use crate::moisture::{ADCSettings, MoistureSensorSettings};
 use crate::valve::ValveSettings;
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
-pub struct Database {
+pub struct ButtonSettings {
+	pub name: String,
+	pub gpio: u8
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+pub struct DatabaseSettings {
 	pub path: String
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct Settings {
-	pub database: Database,
+	pub database: DatabaseSettings,
 	pub controller: ControllerSettings,
 	pub weather: Option<WeatherSensorSettings>,
 	pub adc: Option<ADCSettings>,
