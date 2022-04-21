@@ -5,10 +5,10 @@ use std::error::Error;
 use std::sync::mpsc;
 use std::thread::{JoinHandle, sleep, spawn};
 use std::time::Duration;
-use common::time::UnixTime;
 
 use crate::database::Database;
 use crate::settings::ValveSettings;
+use crate::time::UnixTime;
 
 const SECONDS_BETWEEN_EVENTS: u64 = 5;
 

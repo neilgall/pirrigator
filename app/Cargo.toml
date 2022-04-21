@@ -7,7 +7,6 @@ edition = "2018"
 [dependencies]
 bme280 = { path = "../bme280" }
 mcp3xxx = { path = "../mcp3xxx" }
-common = { path = "../common" }
 chrono = "0.4.11"
 config = "0.10.1"
 env_logger = "0.7.1"

@@ -5,7 +5,7 @@ pub mod controller;
 
 use config::{Config, ConfigError, File, FileFormat};
 use controller::ControllerSettings;
-use common::moisture::Measurement;
+use crate::moisture::Measurement;
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct ButtonSettings {

@@ -5,6 +5,7 @@ mod button;
 mod database;
 mod event;
 mod moisture;
+mod time;
 mod valve;
 mod weather;
 

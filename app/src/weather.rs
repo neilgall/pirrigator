@@ -3,13 +3,33 @@ use std::error::Error;
 use std::sync::mpsc::Sender;
 use std::thread;
 use std::thread::{JoinHandle, sleep};
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 use crate::event::Event;
 use crate::settings::WeatherSensorSettings;
+use crate::time::UnixTime;
 
-use common::time::UnixTime;
-use common::weather::WeatherEvent;
+pub type Temperature = f64;
+pub type Humidity = f64;
+pub type Pressure = f64;
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct WeatherEvent {
+	pub unix_time: UnixTime,
+	pub temperature: Temperature,
+	pub humidity: Humidity,
+	pub pressure: Pressure
+}
+
+impl WeatherEvent {
+	pub fn timestamp(&self) -> u32 {
+		self.unix_time.timestamp()
+	}
+
+	pub fn system_time(&self) -> SystemTime {
+		self.unix_time.system_time()
+	}
+}
 
 pub struct WeatherSensor {
 	thread: Option<JoinHandle<()>>

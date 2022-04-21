@@ -106,14 +106,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "common"
-version = "0.1.0"
-dependencies = [
- "serde 1.0.136",
- "serde_derive",
-]
-
-[[package]]
 name = "config"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -313,7 +305,6 @@ version = "0.1.0"
 dependencies = [
  "bme280",
  "chrono",
- "common",
  "config",
  "env_logger",
  "log",
