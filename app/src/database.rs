@@ -1,5 +1,5 @@
-
 use std::error::Error;
+use influxdb::Client;
 
 use crate::event::Event;
 use crate::time::*;
@@ -9,15 +9,22 @@ use crate::settings::DatabaseSettings;
 use crate::weather;
 
 pub struct Database {
+	client: Client
 }
 
 impl Database {
 	pub fn new(settings: &DatabaseSettings) -> Result<Self, Box<dyn Error>> {
-		Ok(Database {})
+		let client = Client::new(&settings.url, &settings.database);
+
+		Ok(Database {
+			client
+		})
 	}
 
 	pub fn clone(&self) -> Database {
-		Database {}
+		Database {
+			client: self.client.clone()
+		}
 	}
 
 	pub fn store_event(&self, event: &Event) -> Result<(), Box<dyn Error>> {
