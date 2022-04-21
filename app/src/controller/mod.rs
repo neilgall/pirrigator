@@ -3,9 +3,10 @@ mod scheduler;
 use std::sync::mpsc;
 use std::time::Duration;
 
-use crate::button::{Buttons, ButtonEvent, Transition};
+use crate::button::Buttons;
 use crate::database::Database;
 use crate::event::Event;
+use crate::event::button::{ButtonEvent, Transition};
 use crate::moisture::MoistureSensor;
 use crate::settings::controller::{ControllerSettings, Zone};
 use crate::valve::Valves;

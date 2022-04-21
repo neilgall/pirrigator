@@ -1,4 +1,4 @@
-use crate::moisture::Measurement;
+use crate::event::moisture::Measurement;
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct ADCSettings {

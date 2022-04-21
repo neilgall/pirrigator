@@ -2,11 +2,12 @@ use std::error::Error;
 use influxdb::Client;
 
 use crate::event::Event;
+use crate::event::weather::WeatherEvent;
+use crate::event::moisture::{Measurement, MoistureEvent};
 use crate::time::*;
 
 use crate::moisture;
 use crate::settings::DatabaseSettings;
-use crate::weather;
 
 pub struct Database {
 	client: Client
@@ -36,11 +37,11 @@ impl Database {
 		Ok(())
 	}
 
-	fn store_weather(&self, event: &weather::WeatherEvent) -> Result<(), Box<dyn Error>> {
+	fn store_weather(&self, event: &WeatherEvent) -> Result<(), Box<dyn Error>> {
 		Ok(())
 	}
 
-	fn store_moisture(&self, event: &moisture::MoistureEvent) -> Result<(), Box<dyn Error>> {
+	fn store_moisture(&self, event: &MoistureEvent) -> Result<(), Box<dyn Error>> {
 		Ok(())
 	}
 
@@ -48,7 +49,7 @@ impl Database {
 		Ok(())
 	}
 
-	pub fn get_min_moisture_in_last_hour(&self, sensor: &str) -> Result<moisture::Measurement, Box<dyn Error>> {
+	pub fn get_min_moisture_in_last_hour(&self, sensor: &str) -> Result<Measurement, Box<dyn Error>> {
 		Ok(0)
 	}
 }

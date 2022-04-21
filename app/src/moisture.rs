@@ -8,29 +8,14 @@ use mcp3xxx::{AnalogIn, MCPDevice, SharedMCPDevice};
 use rustpi_io::gpio::*;
 
 use crate::event::Event;
+use crate::event::moisture::{Measurement, MoistureEvent};
 use crate::settings::{ADCSettings, MoistureSensorSettings};
 use crate::time::UnixTime;
-
-pub type Measurement = u16;
 
 const CALIBRATED_WET: Measurement = 100;
 const CALIBRATED_DRY: Measurement = 0;
 const CALIBRATED_RANGE: Measurement = CALIBRATED_WET - CALIBRATED_DRY;
 const SECONDS_BETWEEN_SAMPLES: u64 = 60;
-
-
-#[derive(Debug)]
-pub struct MoistureEvent {
-	pub unix_time: UnixTime,
-	pub name: String,
-	pub value: Measurement
-}
-
-impl MoistureEvent {
-	pub fn timestamp(&self) -> u32 {
-		self.unix_time.timestamp()
-	}
-}
 
 
 #[derive(Debug)]

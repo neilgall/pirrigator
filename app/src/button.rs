@@ -6,7 +6,8 @@ use std::error::Error;
 use std::sync::mpsc::Sender;
 use std::thread::{JoinHandle, spawn, sleep};
 use std::time::{Duration, SystemTime};
-use crate::event::Event;
+
+use crate::event::{Event, button::ButtonEvent, button::Transition};
 use crate::settings::ButtonSettings;
 
 pub struct Buttons {
@@ -19,30 +20,6 @@ impl Drop for Buttons {
 			thread.join().unwrap();
 		}
 	}
-}
-
-#[derive(Debug)]
-pub enum Transition {
-	Pressed,
-	Released
-}
-
-impl From<bool> for Transition {
-	fn from(b: bool) -> Self {
-		// default is active high
-		if b {
-			Transition::Released
-		} else {
-			Transition::Pressed
-		}
-	}
-}
-
-#[derive(Debug)]
-pub struct ButtonEvent {
-	pub timestamp: SystemTime,
-	pub name: String,
-	pub transition: Transition
 }
 
 struct Button {
