@@ -6,16 +6,11 @@ use std::sync::mpsc;
 use std::thread::{JoinHandle, sleep, spawn};
 use std::time::Duration;
 use common::time::UnixTime;
+
 use crate::database::Database;
+use crate::settings::ValveSettings;
 
 const SECONDS_BETWEEN_EVENTS: u64 = 5;
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-pub struct ValveSettings {
-	pub name: String,
-	pub socket: String,
-	pub gpio: u8
-}
 
 enum ValveState {
 	Closed,

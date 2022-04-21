@@ -4,17 +4,12 @@ use std::sync::mpsc::Sender;
 use std::thread;
 use std::thread::{JoinHandle, sleep};
 use std::time::Duration;
+
 use crate::event::Event;
+use crate::settings::WeatherSensorSettings;
 
 use common::time::UnixTime;
 use common::weather::WeatherEvent;
-
-#[derive(Debug, Deserialize, PartialEq, Eq)]
-pub struct WeatherSensorSettings {
-	pub device: String,
-	pub address: u16,
-	pub update: u64
-}
 
 pub struct WeatherSensor {
 	thread: Option<JoinHandle<()>>

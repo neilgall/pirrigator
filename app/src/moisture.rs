@@ -6,7 +6,10 @@ use std::str::FromStr;
 use std::sync::mpsc::Sender;
 use mcp3xxx::{AnalogIn, MCPDevice, SharedMCPDevice};
 use rustpi_io::gpio::*;
+
 use crate::event::Event;
+use crate::settings::{ADCSettings, MoistureSensorSettings};
+
 use common::moisture::{Measurement, MoistureEvent};
 use common::time::UnixTime;
 
@@ -14,24 +17,6 @@ const CALIBRATED_WET: Measurement = 100;
 const CALIBRATED_DRY: Measurement = 0;
 const CALIBRATED_RANGE: Measurement = CALIBRATED_WET - CALIBRATED_DRY;
 const SECONDS_BETWEEN_SAMPLES: u64 = 60;
-
-#[derive(Debug, Deserialize, PartialEq, Eq)]
-pub struct ADCSettings {
-	pub device: String,
-	pub device_type: String,
-	pub chip_select_gpio: u8,
-	pub enable_gpio: u8,
-	pub update: u64
-}
-
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
-pub struct MoistureSensorSettings {
-	pub name: String,
-	pub socket: String,
-	pub channel: u8,
-	pub min_reading: Measurement,
-	pub max_reading: Measurement
-}
 
 #[derive(Debug)]
 pub struct MoistureSensor {
