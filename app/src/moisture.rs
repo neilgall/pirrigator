@@ -2,8 +2,8 @@ use std::error::Error;
 use std::thread;
 use std::thread::{JoinHandle, sleep};
 use std::str::FromStr;
-use std::sync::mpsc::Sender;
 use std::time::{SystemTime, Duration};
+use tokio::sync::mpsc::Sender;
 
 use chrono::Utc;
 use mcp3xxx::{AnalogIn, MCPDevice, SharedMCPDevice};

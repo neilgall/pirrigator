@@ -2,9 +2,9 @@ use chrono::Utc;
 use rustpi_io::gpio::*;
 
 use std::error::Error;
-use std::sync::mpsc;
 use std::thread::{JoinHandle, sleep, spawn};
 use std::time::Duration;
+use tokio::sync::mpsc;
 
 use crate::event::{Event, irrigate::IrrigatedEvent};
 use crate::settings::ValveSettings;
@@ -83,25 +83,24 @@ impl Drop for Valve {
 	}
 }
 
-fn irrigate(valve: &mut Valve, duration: Duration, tx: &mpsc::Sender<Event>) {
+async fn irrigate(valve: &mut Valve, duration: Duration, tx: &mpsc::Sender<Event>) {
 	valve.irrigate_event(duration).into_iter().for_each(
 		|event| tx.send(Event::IrrigatedEvent(event)).unwrap()
 	);
 	sleep(Duration::from_secs(SECONDS_BETWEEN_EVENTS))
 }
 
-fn main(rx: mpsc::Receiver<Command>, event_tx: mpsc::Sender<Event>, mut valves: Vec<Valve>) {
-	loop {
-		let command = rx.recv().unwrap();
+async fn main(mut rx: mpsc::Receiver<Command>, event_tx: mpsc::Sender<Event>, mut valves: Vec<Valve>) {
+	while let Some(command) = rx.recv().await {
 		match command {
 			Command::IrrigateAll { duration } => {
 				for mut valve in &mut valves {
-					irrigate(&mut valve, duration, &event_tx);
+					irrigate(&mut valve, duration, &event_tx).await;
 				}
 			},
 			Command::Irrigate { name, duration } => {
 				match valves.iter_mut().find(|ref v| v.name == name) {
-					Some(valve) => irrigate(valve, duration, &event_tx),
+					Some(valve) => irrigate(valve, duration, &event_tx).await,
 					None => warn!("no such valve {}", name)
 				}
 			}
@@ -140,11 +139,11 @@ impl Valves {
 		})
 	}
 
-	pub fn irrigate_all(&self, duration: Duration) {
-		self.tx.send(Command::IrrigateAll { duration }).unwrap();
+	pub async fn irrigate_all(&self, duration: Duration) {
+		self.tx.send(Command::IrrigateAll { duration }).await.unwrap();
 	}
 
-	pub fn irrigate(&self, name: &str, duration: Duration) {
-		self.tx.send(Command::Irrigate { name: name.to_string(), duration }).unwrap();
+	pub async fn irrigate(&self, name: &str, duration: Duration) {
+		self.tx.send(Command::Irrigate { name: name.to_string(), duration }).await.unwrap();
 	}
 }

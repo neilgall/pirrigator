@@ -1,6 +1,4 @@
-use chrono::{DateTime, Utc};
-use std::error::Error;
-use influxdb::Client;
+use influxdb::{Client, InfluxDbWriteable};
 
 use crate::event::Event;
 use crate::event::button::ButtonEvent;
@@ -13,7 +11,7 @@ pub struct Database {
 	client: Client
 }
 
-pub type DbResult<T> = Result<T, Box<dyn Error>>;
+pub type DbResult<T> = Result<T, influxdb::Error>;
 
 impl Database {
 	pub fn new(settings: &DatabaseSettings) -> DbResult<Self> {
@@ -31,34 +29,38 @@ impl Database {
 		}
 	}
 
-	pub fn store_event(&mut self, event: &Event) -> DbResult<()> {
-		match event {
-			Event::ButtonEvent(b) => self.store_button(b),
-			Event::WeatherEvent(w) => self.store_weather(w),
-			Event::MoistureEvent(m) => self.store_moisture(m),
-			Event::IrrigatedEvent(i) => self.store_irrigated(i),
-			_ => Ok(())
-		}?;
+	pub async fn store_event(&mut self, event: &Event) -> DbResult<()> {
+		let result = match event {
+			Event::ButtonEvent(b) => self.store_button(b).await,
+			Event::WeatherEvent(w) => self.store_weather(w).await,
+			Event::MoistureEvent(m) => self.store_moisture(m).await,
+			Event::IrrigatedEvent(i) => self.store_irrigated(i).await,
+			_ => Ok("".into())
+		};
+		match result {
+			Ok(_) => debug!("successfully stored event {:?}", event),
+			Err(e) => error!("failed to store event {:?}: {:?}", event, e)
+		}
 		Ok(())
 	}
 
-	fn store_button(&mut self, event: &ButtonEvent) -> DbResult<()> {
-		Ok(())
+	async fn store_button(&mut self, event: &ButtonEvent) -> DbResult<String> {
+		self.client.query(event.clone().into_query("button")).await
 	}
 
-	fn store_weather(&mut self, event: &WeatherEvent) -> DbResult<()> {
-		Ok(())
+	async fn store_weather(&mut self, event: &WeatherEvent) -> DbResult<String> {
+		self.client.query(event.clone().into_query("weather")).await
 	}
 
-	fn store_moisture(&mut self, event: &MoistureEvent) -> DbResult<()> {
-		Ok(())
+	async fn store_moisture(&mut self, event: &MoistureEvent) -> DbResult<String> {
+		self.client.query(event.clone().into_query("moisture")).await
 	}
 
-	pub fn store_irrigated(&mut self, event: &IrrigatedEvent) -> DbResult<()> {
-		Ok(())
+	async fn store_irrigated(&mut self, event: &IrrigatedEvent) -> DbResult<String> {
+		self.client.query(event.clone().into_query("irrigated")).await
 	}
 
-	pub fn get_min_moisture_in_last_hour(&self, sensor: &str) -> DbResult<Measurement> {
+	pub fn get_min_moisture_in_last_hour(&self, sensor: &str) -> Result<Measurement, Box<dyn std::error::Error>> {
 		Ok(0)
 	}
 }

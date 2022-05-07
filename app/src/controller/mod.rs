@@ -1,7 +1,8 @@
 mod scheduler;
 
-use std::sync::mpsc;
+use futures::future;
 use std::time::Duration;
+use tokio::sync::mpsc;
 
 use crate::button::Buttons;
 use crate::database::Database;
@@ -31,28 +32,36 @@ pub struct Controller {
 }
 
 impl Controller {
-	pub fn run(&mut self, rx: mpsc::Receiver<Event>) {
-		loop {
-			let event = rx.recv()
-				.expect("receive error");
-
+	pub async fn run(&mut self, rx: &mut mpsc::Receiver<Event>) {
+		while let Some(event) = rx.recv().await {
 			debug!("event {:?}", event);
 
 			self.database.store_event(&event)
+				.await
 				.expect("database store error");
 
 			match event {
-				Event::ButtonEvent(b) => self.button_event(&b),
-				Event::ConditionalIrrigateEvent(name) => self.conditionally_irrigate_zone_event(&name),
-				Event::IrrigateEvent(name) => self.irrigate_zone_event(&name),
+				Event::ButtonEvent(b) => {
+					self.button_event(&b).await
+				}
+				Event::ConditionalIrrigateEvent(name) => {
+					self.conditionally_irrigate_zone_event(&name).await
+				}
+				Event::IrrigateEvent(name) => {
+					self.irrigate_zone_event(&name).await
+				}
 				_ => {}
 			}
 		}
 	}
 
-	fn button_event(&mut self, b: &ButtonEvent) {
+	async fn button_event(&mut self, b: &ButtonEvent) {
 		if !b.state {
-			self.settings.zones.iter().for_each(|ref zone| self.irrigate_if_below_threshold(zone));
+			future::join_all(
+				self.settings.zones.iter().map(|ref zone|
+					self.irrigate_zone_event(&zone.name)
+				)
+			).await;
 		}
 	}
 
@@ -60,29 +69,45 @@ impl Controller {
 		self.settings.zones.iter().find(|z| z.name == name)
 	}
 
-	fn irrigate_zone_event(&self, name: &str) {
+	async fn irrigate_zone_event(&self, name: &str) {
 		match self.zone_by_name(name) {
-			Some(zone) => self.valves.irrigate(&zone.valve, zone.irrigate_duration()),
+			Some(zone) => self.valves.irrigate(&zone.valve, zone.irrigate_duration()).await,
 			None => warn!("unknown zone for irrigation: {}", name)
 		}
 	}
 
-	fn conditionally_irrigate_zone_event(&self, name: &str) {
+	async fn conditionally_irrigate_zone_event(&self, name: &str) {
 		match self.zone_by_name(name) {
-			Some(zone) => self.irrigate_if_below_threshold(zone),
-			None => warn!("unknown zone for conditional irrigation: {}", name)
+			Some(zone) => {
+				if self.should_irrigate_zone(zone).await {
+					self.irrigate_zone_event(&name);
+				}
+			},
+			None => {
+				warn!("unknown zone for conditional irrigation: {}", name)
+			}
 		}
 	}
 
-	fn irrigate_if_below_threshold(&self, zone: &Zone) {
-		let any_below_threshold =  zone.sensors.iter()
-			.map(|sensor| self.database.get_min_moisture_in_last_hour(sensor))
+	async fn should_irrigate_zone(&self, zone: &Zone) -> bool {
+		let moisture_levels = future::try_join_all(
+			zone.sensors.iter()
+				.map(|sensor| self.database.get_min_moisture_in_last_hour(sensor))
+		).await;
+
+		let any_below_threshold = moisture_levels
+			.iter()
 			.any(|result| result.map(|m| m < zone.threshold).unwrap_or(false));
-		if any_below_threshold {
-			debug!("zone {} below moisture threshold in past hour; starting irrigation", zone.name);
-			self.valves.irrigate(&zone.valve, zone.irrigate_duration());
-		} else {
-			debug!("zone {} above moisture threshold in past hour; skipping irrigation", zone.name);
-		}
+
+		any_below_threshold
 	}
+
+
+	// 		debug!("zone {} below moisture threshold in past hour; starting irrigation", zone.name);
+	// 		async || self.valves.irrigate(&zone.valve, zone.irrigate_duration()).await
+	// 	} else {
+	// 		debug!("zone {} above moisture threshold in past hour; skipping irrigation", zone.name);
+	// 		async || {}
+	// 	}
+	// }
 }

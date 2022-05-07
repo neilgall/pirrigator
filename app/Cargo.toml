@@ -9,6 +9,7 @@ bme280 = { path = "../bme280" }
 mcp3xxx = { path = "../mcp3xxx" }
 chrono = "0.4.11"
 config = "0.10.1"
+futures = "0.3.21"
 env_logger = "0.7.1"
 influxdb = { version = "0.5.2", features = ["derive"] }
 log = "0.4.8"
@@ -16,6 +17,7 @@ rustpi_io = "0.1.0"
 serde = "^1.0.110"
 serde_derive = "^1.0.110"
 sunrise = "1.0.0"
+tokio = { version = "1", features = ["rt"] }
 
 [profile.release]
 lto = true

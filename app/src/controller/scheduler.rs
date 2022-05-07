@@ -3,8 +3,8 @@ use chrono::Duration;
 use std::error::Error;
 use std::fmt;
 use std::str::FromStr;
-use std::sync::mpsc::Sender;
 use std::thread::{JoinHandle, sleep, spawn};
+use tokio::sync::mpsc::Sender;
 
 use crate::event::Event;
 use crate::settings::controller::{Location, Zone};

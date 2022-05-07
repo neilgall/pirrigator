@@ -1,10 +1,10 @@
 use bme280::{Bme280Device, Bme280Data};
 use std::error::Error;
-use std::sync::mpsc::Sender;
 use std::thread;
 use std::thread::{JoinHandle};
 use std::time::Duration;
 use chrono::Utc;
+use tokio::sync::mpsc::Sender;
 
 use crate::event::{Event, weather::WeatherEvent};
 use crate::settings::WeatherSensorSettings;

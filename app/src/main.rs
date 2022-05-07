@@ -7,6 +7,7 @@ extern crate pirrigator;
 use pirrigator::settings::Settings;
 use pirrigator::pirrigator::Pirrigator;
 
+#[tokio:main]
 fn main() {
 	env_logger::init();
 
@@ -15,7 +16,7 @@ fn main() {
 
 	debug!("settings: {:?}", s);
 
-	let p = Pirrigator::new(s)
+	let mut p = Pirrigator::new(s)
 		.expect("Failed to start Pirrigator");
 
 	p.run();

@@ -1,11 +1,10 @@
 use std::error::Error;
-use std::sync::mpsc;
-use std::thread::{JoinHandle, sleep, spawn};
-use std::time::Duration;
+use tokio::sync::mpsc;
 
 use crate::button::Buttons;
 use crate::controller::{Controller, Scheduler};
 use crate::database::Database;
+use crate::event::Event;
 use crate::moisture::MoistureSensor;
 use crate::settings::Settings;
 use crate::valve::Valves;
@@ -20,20 +19,13 @@ fn traverse<T, U, E>(t: &Option<T>, f: &dyn Fn(&T) -> Result<U, E>) -> Result<Op
 }
 
 pub struct Pirrigator {
-	thread: Option<JoinHandle<()>>
-}
-
-impl Drop for Pirrigator {
-	fn drop(&mut self) {
-		if let Some(thread) = self.thread.take() {
-			thread.join().unwrap();
-		}
-	}
+	controller: Controller,
+	rx: mpsc::Receiver<Event>
 }
 
 impl Pirrigator {
 	pub fn new(s: Settings) -> Result<Pirrigator, Box<dyn Error>> {
-		let (tx, rx) = mpsc::channel();
+		let (tx, rx) = mpsc::channel(10);
 		let db = Database::new(&s.database)?;
 
 		let weather = traverse(
@@ -66,16 +58,13 @@ impl Pirrigator {
 			valves
 		};
 
-		let thread = spawn(move || controller.run(rx));
-
-		return Ok(Pirrigator { 
-			thread: Some(thread)
+		return Ok(Pirrigator {
+			controller,
+			rx
 		})
 	}
 
-	pub fn run(&self) {
-		loop {
-			sleep(Duration::MAX);
-		}
+	pub fn run(&mut self) {
+		self.controller.run(&mut self.rx);
 	}
 }

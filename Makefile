@@ -16,20 +16,19 @@ test:
 clean:
 	(cd app && cargo clean)
 
-app-release:
+.PHONY: local
+local:
+	(cd app && cargo build --target=x86_64-unknown-linux-gnu)
+
+.PHONY: target
+target:
 	(cd app && cargo build --target=arm-unknown-linux-gnueabihf --release)
 	arm-linux-gnueabihf-strip $(RELEASE_TARGET)
 
-install: app-release
+install: target
 	mkdir -p ${INSTALL}
 	${CP} app/Settings.yaml.rpi ${INSTALL}/Settings.yaml
 	${CP} ${RELEASE_TARGET} ${INSTALL}/pirrigator
-
-install-ui:
-	mkdir -p ${INSTALL_UI}
-	${CP} ui/index.html ${INSTALL_UI}
-	${CP} ui/pirrigator.css ${INSTALL_UI}
-	${CP} ${UI_BUILD_DIR}/pirrigator* ${INSTALL_UI}
 
 install-to-device: install
 	ssh ${DEVICE} systemctl stop pirrigator
