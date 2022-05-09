@@ -7,10 +7,10 @@ edition = "2018"
 [dependencies]
 bme280 = { path = "../bme280" }
 mcp3xxx = { path = "../mcp3xxx" }
+influxc = { path = "../rust-influxc" }
 chrono = "0.4.11"
 config = "0.10.1"
 env_logger = "0.7.1"
-influxdb = { version = "0.5.2", features = ["derive"] }
 log = "0.4.8"
 rustpi_io = "0.1.0"
 serde = "^1.0.110"

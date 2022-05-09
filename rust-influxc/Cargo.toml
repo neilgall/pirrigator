@@ -1,0 +1,21 @@
+[package]
+name        = "influxc"
+version     = "0.4.2"
+edition     = "2018"
+authors     = ["Leonhard Weber <leonhard.weber@voipir.cl>"]
+license     = "MIT"
+publish     = true
+description = "InfluxDB Client Library"
+keywords    = ["influx", "influxdb"]
+homepage    = "https://github.com/voipir/rust-influxc"
+repository  = "https://github.com/voipir/rust-influxc"
+
+[dependencies]
+log        = {version="0.4"}
+serde      = {version="1", features=["derive"]}
+serde_json = {version="1"}
+base32     = {version="0.4"}
+flate2     = {version="1"}
+base64     = {version="0.13"}
+chrono     = {version="0.4", features=["serde"]}
+reqwest    = {version="0.11", default-features=false, features=["blocking", "json"]}

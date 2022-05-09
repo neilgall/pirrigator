@@ -59,7 +59,7 @@ impl Pirrigator {
 		let mut controller = Controller {
 			settings: s.controller.clone(),
 			scheduler,
-			database: db.clone(),
+			database: db,
 			weather,
 			moisture,
 			buttons,
