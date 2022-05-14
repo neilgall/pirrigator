@@ -13,6 +13,6 @@ pub enum Event {
 	IrrigatedEvent(irrigate::IrrigatedEvent)
 }
 
-pub trait ToRecord {
-	fn fill(&self, record: &mut influxc::Record);
+pub trait ToInfluxDB {
+	fn to_line(&self) -> String;
 }

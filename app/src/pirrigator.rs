@@ -34,7 +34,7 @@ impl Drop for Pirrigator {
 impl Pirrigator {
 	pub fn new(s: Settings) -> Result<Pirrigator, Box<dyn Error>> {
 		let (tx, rx) = mpsc::channel();
-		let db = Database::new(&s.database)?;
+		let db = Database::new(&s.database);
 
 		let weather = traverse(
 			&s.weather,

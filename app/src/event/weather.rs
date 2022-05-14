@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-use influxc::{Record, Value};
 
 pub type Temperature = f64;
 pub type Humidity = f64;
@@ -13,12 +12,13 @@ pub struct WeatherEvent {
 	pub pressure: Pressure
 }
 
-impl super::ToRecord for WeatherEvent {
-	fn fill(&self, record: &mut Record) {
-		record.measurement("weather")
-			.timestamp(self.time)
-			.field("temperature", Value::from(self.temperature))
-			.field("humidity", Value::from(self.humidity))
-			.field("pressure", Value::from(self.pressure));
+impl super::ToInfluxDB for WeatherEvent {
+	fn to_line(&self) -> String {
+		format!("weather temperature={},humidity={},pressure={} {}",
+			self.temperature,
+			self.humidity,
+			self.pressure,
+			self.time.timestamp()
+		)
 	}
 }

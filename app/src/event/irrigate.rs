@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-use influxc::Value;
 
 #[derive(Debug)]
 pub struct IrrigatedEvent {
@@ -8,11 +7,12 @@ pub struct IrrigatedEvent {
     pub seconds: u32
 }
 
-impl super::ToRecord for IrrigatedEvent {
-    fn fill(&self, record: &mut influxc::Record) {
-        record.measurement("irrigated")
-            .timestamp(self.time)
-            .field("name", Value::from(self.name.clone()))
-            .field("durationSeconds", Value::from(self.seconds as i64));
+impl super::ToInfluxDB for IrrigatedEvent {
+    fn to_line(&self) -> String {
+        format!("irrigated,name={} durationSeconds={} {}",
+                self.name,
+                self.seconds,
+                self.time.timestamp()
+        )
     }
 }

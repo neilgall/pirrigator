@@ -1,34 +1,31 @@
-use influxc::{Client, Credentials, FileBacklog, InfluxError, Precision, Record};
-
-use crate::event::{Event, ToRecord};
+use reqwest::blocking::Client;
+use crate::event::{Event, ToInfluxDB};
 use crate::event::moisture::Measurement;
 use crate::settings::DatabaseSettings;
 
 pub struct Database {
 	client: Client,
-	record: Record
+	write_url: String,
+	auth_header: String
 }
 
-type DbResult<T> = Result<T, InfluxError>;
-
 impl Database {
-	pub fn new(settings: &DatabaseSettings) -> DbResult<Self> {
-		let credentials = Credentials::from_basic(&settings.username, &settings.password);
-		let client = Client::build(settings.url.clone(), credentials)
-			.backlog(FileBacklog::new(&settings.backlog_path)?)
-			.finish()
-			.expect("unable to create InfluxDB client");
+	pub fn new(settings: &DatabaseSettings) -> Self {
+		let write_url = format!(
+			"{}/api/v2/write?org={}&bucket={}&precision=s",
+			settings.url, settings.organisation, settings.bucket
+		);
 
-		let record = Record::new(&settings.organisation, &settings.bucket)
-			.precision(Precision::Seconds);
+		let auth_header = format!("Token {}", settings.token);
 
-		Ok(Database {
-			client,
-			record
-		})
+		Database {
+			client: Client::new(),
+			write_url,
+			auth_header
+		}
 	}
 
-	pub fn store_event(&mut self, event: &Event) -> DbResult<()> {
+	pub fn store_event(&self, event: &Event) {
 		match event {
 			Event::ButtonEvent(b) => self.write_event(b),
 			Event::WeatherEvent(w) => self.write_event(w),
@@ -36,13 +33,20 @@ impl Database {
 			Event::IrrigatedEvent(i) => self.write_event(i),
 			_ => ()
 		};
-		Ok(())
 	}
 
-	fn write_event<E: ToRecord>(&mut self, event: &E) {
-		event.fill(&mut self.record);
-		if let Err(e) = self.client.write(&mut self.record) {
-			warn!("Failed to write to influxdb: {}", e);
+	fn write_event<E: ToInfluxDB>(&self, event: &E) {
+		let rsp = self.client.post(&self.write_url)
+			.header("Authorization", &self.auth_header)
+			.body(event.to_line())
+			.send();
+
+		debug!("influxdb>> {:?}", rsp);
+
+		match rsp {
+			Err(e) => warn!("Failed to write to influxdb: {}", e),
+			Ok(e) if e.status().as_u16() > 299 => warn!("influxdb response code {}", e.status()),
+			_ => {}
 		}
 	}
 

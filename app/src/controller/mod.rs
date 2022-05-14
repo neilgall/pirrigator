@@ -38,8 +38,7 @@ impl Controller {
 
 			debug!("event {:?}", event);
 
-			self.database.store_event(&event)
-				.expect("database store error");
+			self.database.store_event(&event);
 
 			match event {
 				Event::ButtonEvent(b) => self.button_event(&b),
